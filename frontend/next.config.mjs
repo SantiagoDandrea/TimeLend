@@ -4,6 +4,9 @@
  * It fits the system by preparing the app for future shared packages and Vercel deployment.
  */
 const nextConfig = {
+  experimental: {
+    externalDir: true
+  },
   reactStrictMode: true,
   transpilePackages: ["@timelend/shared"]
 };

@@ -12,9 +12,12 @@
     "clean": "pnpm exec rimraf .next tsconfig.tsbuildinfo"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.66.8",
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "viem": "^2.23.2",
+    "wagmi": "^2.14.16",
     "zod": "^3.24.2"
   },
   "devDependencies": {
