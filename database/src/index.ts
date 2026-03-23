@@ -4,3 +4,4 @@
  * It fits the system by giving other workspaces one clean persistence entry point.
  */
 export { prisma } from "./client";
+export { CommitmentEventType, CommitmentStatus, Prisma, VerificationType } from "@prisma/client";

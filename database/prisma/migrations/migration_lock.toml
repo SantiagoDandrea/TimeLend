@@ -1,0 +1,4 @@
+# This file pins the migration provider used by Prisma for the TimeLend database workspace.
+# It exists so future migrations remain consistent across local and CI environments.
+# It fits the system by making the migration history deterministic for PostgreSQL deployments.
+provider = "postgresql"

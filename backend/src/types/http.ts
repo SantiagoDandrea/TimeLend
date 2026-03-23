@@ -1,7 +1,7 @@
 /**
- * This file stores backend HTTP payload types used by the system endpoints.
- * It exists to keep controller and service contracts explicit even in the scaffold stage.
- * It fits the system by making future API expansion more predictable and testable.
+ * This file stores backend HTTP payload types shared across controllers.
+ * It exists to make response shapes explicit and stable.
+ * It fits the system by reducing transport-layer ambiguity while the backend grows in complexity.
  */
 export type HealthResponse = {
   environment: string;
@@ -15,4 +15,10 @@ export type VersionResponse = {
   name: string;
   runtime: string;
   version: string;
+};
+
+export type AcceptedJobResponse = {
+  commitmentId: string;
+  message: string;
+  status: "queued";
 };

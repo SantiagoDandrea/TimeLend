@@ -1,8 +1,16 @@
 {
-  "name": "database",
+  "name": "@timelend/database",
   "version": "0.1.0",
   "private": true,
   "description": "Capa de persistencia de TimeLend con Prisma y PostgreSQL, preparada para crecer hacia el modelo completo del dominio.",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
   "scripts": {
     "build": "pnpm exec tsc -p tsconfig.json",
     "lint": "pnpm exec eslint . --max-warnings=0",

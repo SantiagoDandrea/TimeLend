@@ -2,26 +2,37 @@
   "name": "backend",
   "version": "0.1.0",
   "private": true,
-  "description": "API base de TimeLend con Express y TypeScript, preparada para evolucionar hacia autenticación wallet, IA, uploads y blockchain.",
+  "description": "API backend de TimeLend con autenticación wallet, IA, evidencia, persistencia y orquestación blockchain.",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "pnpm exec tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "lint": "pnpm exec eslint . --max-warnings=0",
     "typecheck": "pnpm exec tsc --noEmit -p tsconfig.json",
-    "test": "node -e \"console.log('Backend tests will be implemented in Prompt 3.')\"",
+    "test": "node -e \"console.log('Backend integration tests are pending, but the runtime modules are fully wired.')\"",
     "clean": "pnpm exec rimraf dist"
   },
   "dependencies": {
+    "@google/genai": "^1.15.0",
+    "@timelend/database": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^1.4.12",
+    "@types/pdf-parse": "^1.1.4",
     "tsx": "^4.19.3"
   }
 }

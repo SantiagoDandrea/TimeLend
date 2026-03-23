@@ -9,7 +9,6 @@ import "@nomicfoundation/hardhat-toolbox";
 
 dotenv.config();
 
-const defaultNetwork = process.env.HARDHAT_NETWORK ?? "hardhat";
 const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
 const fujiRpcUrl = process.env.FUJI_RPC_URL ?? process.env.RPC_URL;
 
@@ -20,7 +19,9 @@ const fujiRpcUrl = process.env.FUJI_RPC_URL ?? process.env.RPC_URL;
  * It is important because all contract scripts and tests rely on one shared toolchain definition.
  */
 const config: HardhatUserConfig = {
-  defaultNetwork,
+  // This project defaults to the in-memory Hardhat network so tests stay deterministic
+  // even when developers keep Fuji deployment credentials in their local .env files.
+  defaultNetwork: "hardhat",
   solidity: {
     version: "0.8.28",
     settings: {

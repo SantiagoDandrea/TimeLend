@@ -6,6 +6,9 @@
 import { Router } from "express";
 import type { Router as ExpressRouter } from "express";
 
+import { getApplicationContext } from "../modules/application-context";
+import { createAuthRouter } from "./auth.routes";
+import { createCommitmentRouter } from "./commitment.routes";
 import { createSystemRouter } from "./system.routes";
 
 /**
@@ -15,9 +18,19 @@ import { createSystemRouter } from "./system.routes";
  * It is important because the application boot process only needs to mount one router entry point.
  */
 export function createApiRouter(): ExpressRouter {
+  const applicationContext = getApplicationContext();
   const router = Router();
 
-  router.use(createSystemRouter());
+  router.use(createSystemRouter(applicationContext.systemController));
+  router.use("/auth", createAuthRouter(applicationContext.authController));
+  router.use(
+    "/commitments",
+    createCommitmentRouter({
+      authenticate: applicationContext.authenticate,
+      commitmentController: applicationContext.commitmentController,
+      requireInternal: applicationContext.requireInternal
+    })
+  );
 
   return router;
 }

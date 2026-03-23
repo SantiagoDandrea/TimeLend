@@ -9,8 +9,10 @@ import type { Express } from "express";
 import helmet from "helmet";
 
 import { env } from "./config/env";
-import { errorHandler } from "./middleware/error-handler";
-import { notFoundMiddleware } from "./middleware/not-found";
+import { createHttpLogger } from "./config/logger";
+import { getApplicationContext } from "./modules/application-context";
+import { errorHandler } from "./middlewares/error-handler";
+import { notFoundMiddleware } from "./middlewares/not-found";
 import { createApiRouter } from "./routes";
 
 /**
@@ -20,6 +22,8 @@ import { createApiRouter } from "./routes";
  * It is important because it is the single composition root for the backend HTTP layer.
  */
 export function createApp(): Express {
+  getApplicationContext();
+
   const app = express();
 
   /**
@@ -28,6 +32,12 @@ export function createApp(): Express {
    * It returns control to the next middleware after applying security and body parsing.
    * It is important because every current and future API route depends on these baseline guarantees.
    */
+  app.disable("x-powered-by");
+  app.set("json replacer", (_key: string, value: unknown) =>
+    typeof value === "bigint" ? value.toString() : value
+  );
+  app.set("trust proxy", 1);
+  app.use(createHttpLogger());
   app.use(helmet());
   app.use(
     cors({

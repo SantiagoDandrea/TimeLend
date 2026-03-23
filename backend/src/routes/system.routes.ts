@@ -6,19 +6,19 @@
 import { Router } from "express";
 import type { Router as ExpressRouter } from "express";
 
-import { getHealth, getVersion } from "../controllers/system.controller";
+import type { SystemController } from "../controllers/system.controller";
 
 /**
  * This function creates the router that serves backend system endpoints.
- * It receives no parameters because route dependencies are imported explicitly.
+ * It receives the system controller instance for the current runtime.
  * It returns an Express router instance.
  * It is important because it isolates the public status surface from future domain routes.
  */
-export function createSystemRouter(): ExpressRouter {
+export function createSystemRouter(systemController: SystemController): ExpressRouter {
   const router = Router();
 
-  router.get("/health", getHealth);
-  router.get("/version", getVersion);
+  router.get("/health", systemController.getHealth);
+  router.get("/version", systemController.getVersion);
 
   return router;
 }

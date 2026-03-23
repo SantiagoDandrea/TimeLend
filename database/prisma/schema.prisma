@@ -1,6 +1,6 @@
-// This file defines the initial Prisma data model for TimeLend.
-// It exists to establish the first persistence contracts for users and commitments.
-// It fits the system by giving the backend and future migrations a stable relational baseline.
+// This file defines the production-oriented Prisma data model for TimeLend.
+// It exists to persist product metadata, evidence, AI decisions and lifecycle history that the smart contract intentionally does not store.
+// It fits the system by making PostgreSQL the source of truth for product state while blockchain remains the source of truth for funds.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,51 +11,284 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// This enum models the early commitment lifecycle states.
-// It exists to keep status transitions typed from the database layer upward.
-// It fits the system by preparing the schema for AI review, appeal and resolution flows.
+/// This enum reflects the logical product states that map directly to the contract lifecycle.
+/// It exists to keep the database consistent with on-chain outcomes without inventing ambiguous product states.
+/// It fits the system by encoding the exact ACTIVE -> FAILED_PENDING_APPEAL -> COMPLETED / FAILED_FINAL flow.
 enum CommitmentStatus {
-  DRAFT
   ACTIVE
-  EVIDENCE_PENDING
-  UNDER_REVIEW
+  FAILED_PENDING_APPEAL
   COMPLETED
-  FAILED
-  APPEALED
+  FAILED_FINAL
 }
 
-// This model represents a platform user identified by wallet address.
-// It exists to anchor ownership of commitments and future authentication records.
-// It fits the system by acting as the root actor entity for the TimeLend domain.
+/// This enum differentiates the first AI decision from the appeal re-evaluation.
+/// It exists so verification history remains auditable over time.
+/// It fits the system by making INITIAL and APPEAL decisions queryable and explicit.
+enum VerificationType {
+  INITIAL
+  APPEAL
+}
+
+/// This enum classifies commitment history events persisted for auditing and debugging.
+/// It exists to record meaningful lifecycle transitions beyond the latest current status.
+/// It fits the system by preserving a timeline of product-level actions tied to each commitment.
+enum CommitmentEventType {
+  CREATED
+  EVIDENCE_ADDED
+  VERIFICATION_STARTED
+  VERIFIED_COMPLETED
+  VERIFIED_FAILED
+  APPEAL_RECORDED
+  APPEAL_RESOLVED
+  FAILED_FINALIZED
+}
+
+/// This model represents a TimeLend user identified by wallet address.
+/// It exists to anchor ownership of commitments, evidence uploads and wallet-authentication metadata.
+/// It fits the system by acting as the primary actor entity across the product lifecycle.
 model User {
-  id            String       @id @default(cuid())
-  walletAddress String       @unique
-  displayName   String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  commitments   Commitment[]
+  /// Stable off-chain UUID used by the backend and JWT subject.
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Unique normalized EVM wallet address controlled by the user.
+  walletAddress String @unique
+
+  /// One-time nonce used for replay-safe wallet authentication.
+  authNonce String?
+
+  /// Timestamp of the currently active auth nonce.
+  authNonceIssuedAt DateTime?
+
+  /// Creation timestamp for auditing and ordering.
+  createdAt DateTime @default(now())
+
+  /// Update timestamp maintained automatically by Prisma.
+  updatedAt DateTime @updatedAt
+
+  /// Commitments owned by this wallet.
+  commitments Commitment[]
+
+  /// Evidence files uploaded by this wallet.
+  evidences Evidence[]
 }
 
-// This model stores the initial shape of a user commitment.
-// It exists to persist the off-chain record that future blockchain and AI flows will reference.
-// It fits the system by capturing the minimum task, amount and deadline data needed in later prompts.
+/// This model stores the off-chain representation of a commitment created on-chain by the user.
+/// It exists because the contract should not store rich product metadata, AI history or UX-oriented state.
+/// It fits the system by mapping one on-chain commitment to one off-chain aggregate.
 model Commitment {
-  id                   String           @id @default(cuid())
-  userId               String
-  title                String
-  description          String?
-  escrowAmount         Decimal          @db.Decimal(18, 8)
-  deadlineAt           DateTime
-  failureWalletAddress String
-  evidenceReference    String?
-  aiReviewSummary      String?
-  appealUsed           Boolean          @default(false)
-  status               CommitmentStatus @default(DRAFT)
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Stable off-chain UUID exposed to frontend and used across relational tables.
+  id String @id @default(uuid()) @db.Uuid
 
-  @@index([status])
-  @@index([deadlineAt])
-  @@index([userId])
+  /// Immutable on-chain identifier emitted by the TimeLend contract.
+  onchainId BigInt @unique
+
+  /// Foreign key pointing to the owner wallet in the User table.
+  userId String @db.Uuid
+
+  /// Short human-friendly label used by dashboards and evidence prompts.
+  title String
+
+  /// Full user-provided commitment description sent to AI verification.
+  description String
+
+  /// Escrow amount stored as a wei string to avoid precision loss.
+  amount String
+
+  /// Deadline mirrored from the contract for product queries and UX.
+  deadline DateTime
+
+  /// Failure beneficiary mirrored from the contract for consistency checks and UI display.
+  failReceiver String
+
+  /// Product-level status aligned with the smart contract lifecycle.
+  status CommitmentStatus @default(ACTIVE)
+
+  /// True once the user has consumed the single available appeal path.
+  appealed Boolean @default(false)
+
+  /// Idempotency lock used to prevent double verification, double resolution and duplicate tx submission.
+  isProcessing Boolean @default(false)
+
+  /// Timestamp capturing when the current processing lock started.
+  processingStartedAt DateTime?
+
+  /// Optional hash of the original createCommitment transaction for traceability.
+  createCommitmentTxHash String?
+
+  /// Transaction hash produced when the backend marks the commitment as completed.
+  markCompletedTxHash String?
+
+  /// Transaction hash produced when the backend marks the commitment as failed.
+  markFailedTxHash String?
+
+  /// Transaction hash produced when the backend resolves an appeal.
+  resolveAppealTxHash String?
+
+  /// Transaction hash produced when the backend finalizes an unappealed failure.
+  finalizeFailedTxHash String?
+
+  /// Timestamp at which the backend marked the commitment as failed on-chain.
+  failureMarkedAt DateTime?
+
+  /// Timestamp after which the failed commitment can be finalized if no appeal was recorded.
+  appealWindowEndsAt DateTime?
+
+  /// Timestamp at which the commitment completed successfully.
+  completedAt DateTime?
+
+  /// Timestamp at which the commitment became definitively failed.
+  failedFinalAt DateTime?
+
+  /// Creation timestamp for ordering and audits.
+  createdAt DateTime @default(now())
+
+  /// Update timestamp maintained automatically by Prisma.
+  updatedAt DateTime @updatedAt
+
+  /// Owner relation for this commitment.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// All evidence files ever uploaded for this commitment.
+  evidences Evidence[]
+
+  /// All AI decisions ever produced for this commitment.
+  verifications Verification[]
+
+  /// Product-level history entries for this commitment.
+  events CommitmentEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status, appealed])
+  @@index([isProcessing])
+  @@index([deadline])
+}
+
+/// This model stores the evidence artifacts submitted by the user.
+/// It exists so every AI decision can be traced back to the exact uploaded file and extracted text.
+/// It fits the system by persisting evidence independently from the current commitment status.
+model Evidence {
+  /// Stable UUID for the evidence row.
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Foreign key pointing to the parent commitment.
+  commitmentId String @db.Uuid
+
+  /// Foreign key pointing to the uploading user.
+  uploadedByUserId String @db.Uuid
+
+  /// Logical URL or relative path used to locate the stored file.
+  fileUrl String
+
+  /// Original filename supplied by the user for auditability.
+  originalFileName String
+
+  /// Stored filename used by the local storage adapter.
+  storedFileName String
+
+  /// MIME type reported for the uploaded file.
+  mimeType String
+
+  /// File size in bytes captured at upload time.
+  fileSize Int
+
+  /// Extracted text that will be fed into AI verification.
+  extractedText String
+
+  /// Creation timestamp for ordering and history.
+  createdAt DateTime @default(now())
+
+  /// Parent commitment relation.
+  commitment Commitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+
+  /// Uploader relation.
+  uploadedBy User @relation(fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  /// Verifications that explicitly used this evidence record.
+  verifications Verification[]
+
+  @@index([commitmentId, createdAt])
+  @@index([uploadedByUserId])
+}
+
+/// This model stores one AI verification outcome.
+/// It exists to preserve the result, confidence and reasoning that justified an on-chain decision.
+/// It fits the system by making initial verification and appeal resolution fully auditable.
+model Verification {
+  /// Stable UUID for the verification row.
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Foreign key pointing to the evaluated commitment.
+  commitmentId String @db.Uuid
+
+  /// Optional foreign key pointing to the evidence used for the decision.
+  evidenceId String? @db.Uuid
+
+  /// Boolean decision returned by the AI layer.
+  result Boolean
+
+  /// Confidence score normalized to the 0..1 range.
+  confidence Float
+
+  /// Human-readable reasoning stored for judges, audits and appeals.
+  reasoning String
+
+  /// Distinguishes initial review from appeal review.
+  type VerificationType
+
+  /// Provider identifier used by the AI adapter.
+  provider String
+
+  /// Concrete model name used by the AI adapter.
+  model String
+
+  /// Raw provider payload kept for deeper diagnostics.
+  rawResponse Json?
+
+  /// Creation timestamp for history queries.
+  createdAt DateTime @default(now())
+
+  /// Parent commitment relation.
+  commitment Commitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+
+  /// Evidence relation when the decision was tied to a specific upload.
+  evidence Evidence? @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+
+  @@index([commitmentId, createdAt])
+  @@index([type])
+  @@index([evidenceId])
+}
+
+/// This model stores an append-only product timeline for each commitment.
+/// It exists to explain how and why the latest status was reached without relying only on mutable columns.
+/// It fits the system by giving operators and judges a compact audit trail of relevant lifecycle events.
+model CommitmentEvent {
+  /// Stable UUID for the event row.
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Foreign key pointing to the commitment whose history is being recorded.
+  commitmentId String @db.Uuid
+
+  /// Semantic event label for the recorded transition.
+  type CommitmentEventType
+
+  /// Previous status before the transition when applicable.
+  fromStatus CommitmentStatus?
+
+  /// New status after the transition when applicable.
+  toStatus CommitmentStatus?
+
+  /// Optional blockchain transaction hash tied to this event.
+  txHash String?
+
+  /// Optional machine-readable metadata captured for diagnostics and audits.
+  metadata Json?
+
+  /// Event creation timestamp.
+  createdAt DateTime @default(now())
+
+  /// Parent commitment relation.
+  commitment Commitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+
+  @@index([commitmentId, createdAt])
+  @@index([type])
 }
