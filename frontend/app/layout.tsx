@@ -18,7 +18,7 @@ import "./globals.css";
  */
 export const metadata: Metadata = {
   title: "TimeLend",
-  description: "Demo frontend scaffold for the TimeLend platform."
+  description: "Premium TimeLend demo for wallet auth, on-chain commitments, and AI verification.",
 };
 
 type RootLayoutProps = {
@@ -34,7 +34,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="es">
-      <body>
+      <body className="app-body">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

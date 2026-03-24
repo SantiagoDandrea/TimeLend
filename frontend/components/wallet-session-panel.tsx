@@ -39,16 +39,20 @@ export function WalletSessionPanel({
   sessionError
 }: WalletSessionPanelProps) {
   return (
-    <section className="panel">
+    <section className="panel wallet-panel" id="wallet-panel">
       <div className="panel-header">
         <div>
           <p className="section-label">Wallet</p>
-          <h2 className="section-title">Connection and backend session</h2>
+          <h2 className="section-title">Connection and session control</h2>
+          <p className="muted-copy">
+            Connect, authenticate, and confirm that your wallet is ready to interact with the live
+            demo flow.
+          </p>
         </div>
       </div>
 
       <div className="panel-grid">
-        <div className="stat-box">
+        <div className="stat-box stat-box-highlight">
           <span>Connection</span>
           <strong>{isConnected ? "Connected" : "Not connected"}</strong>
           <small>{connectorName ?? "No connector selected"}</small>
@@ -67,15 +71,24 @@ export function WalletSessionPanel({
         </div>
       </div>
 
-      <div className="button-row">
+      <div className="button-row wallet-actions">
         {!isConnected ? (
-          <button className="button button-primary" disabled={isConnecting} onClick={() => void onConnect()} type="button">
+          <button
+            className="button button-primary"
+            disabled={isConnecting}
+            onClick={() => void onConnect()}
+            type="button"
+          >
             {isConnecting ? "Connecting..." : "Connect wallet"}
           </button>
         ) : (
           <>
             {!isOnSupportedChain ? (
-              <button className="button button-warning" onClick={() => void onSwitchChain()} type="button">
+              <button
+                className="button button-warning"
+                onClick={() => void onSwitchChain()}
+                type="button"
+              >
                 Switch to Fuji
               </button>
             ) : null}
@@ -96,6 +109,17 @@ export function WalletSessionPanel({
             </button>
           </>
         )}
+      </div>
+
+      <div className="wallet-meta-row">
+        <div className="wallet-meta-card">
+          <span>Network</span>
+          <strong>{isOnSupportedChain ? "Avalanche Fuji" : "Unsupported chain"}</strong>
+        </div>
+        <div className="wallet-meta-card">
+          <span>Wallet address</span>
+          <strong>{address ?? "Waiting for connection"}</strong>
+        </div>
       </div>
 
       {sessionError !== null ? <p className="feedback feedback-error">{sessionError}</p> : null}

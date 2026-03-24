@@ -173,12 +173,19 @@ export function CommitmentCard({
     <article className="commitment-card">
       <div className="commitment-card-header">
         <div>
-          <p className="section-label">{commitment.title}</p>
-          <h3>{commitment.description}</h3>
+          <p className="section-label">Commitment {commitment.onchainId}</p>
+          <h3 className="commitment-title">{commitment.title}</h3>
+          <p className="detail-copy">{commitment.description}</p>
         </div>
         <span className={`status-badge status-${commitment.status.toLowerCase()}`}>
           {commitment.isProcessing ? "PROCESSING" : commitment.status}
         </span>
+      </div>
+
+      <div className="card-topline">
+        <span className="mini-pill">Escrow live</span>
+        <span className="mini-pill">Evidence aware</span>
+        <span className="mini-pill">{commitment.appealed ? "Appealed" : "Standard flow"}</span>
       </div>
 
       <div className="stats-grid">
@@ -319,44 +326,55 @@ export function CommitmentCard({
         </div>
       ) : null}
 
-      <div className="button-row">
-        <button
-          className="button button-primary"
-          disabled={!canVerify || activeAction !== null}
-          onClick={() => void runCardAction("Verification", () => onVerify(commitment.id))}
-          type="button"
-        >
-          {activeAction === "Verification" ? "Queueing..." : "Verify"}
-        </button>
+      <div className="action-panel">
+        <div className="section-row">
+          <div>
+            <p className="section-label">Actions</p>
+            <h4 className="subsection-title">Drive the workflow</h4>
+          </div>
+        </div>
 
-        <button
-          className="button button-warning"
-          disabled={!canAppeal || activeAction !== null}
-          onClick={() => void runCardAction("Appeal", () => onAppeal(commitment))}
-          type="button"
-        >
-          {activeAction === "Appeal" ? "Appealing..." : "Appeal"}
-        </button>
+        <div className="button-row">
+          <button
+            className="button button-primary"
+            disabled={!canVerify || activeAction !== null}
+            onClick={() => void runCardAction("Verification", () => onVerify(commitment.id))}
+            type="button"
+          >
+            {activeAction === "Verification" ? "Queueing..." : "Verify"}
+          </button>
 
-        <button
-          className="button button-secondary"
-          disabled={!canResolveAppeal || activeAction !== null}
-          onClick={() =>
-            void runCardAction("Appeal resolution", () => onResolveAppeal(commitment.id))
-          }
-          type="button"
-        >
-          {activeAction === "Appeal resolution" ? "Queueing..." : "Resolve appeal"}
-        </button>
+          <button
+            className="button button-warning"
+            disabled={!canAppeal || activeAction !== null}
+            onClick={() => void runCardAction("Appeal", () => onAppeal(commitment))}
+            type="button"
+          >
+            {activeAction === "Appeal" ? "Appealing..." : "Appeal"}
+          </button>
 
-        <button
-          className="button button-secondary"
-          disabled={!canFinalize || activeAction !== null}
-          onClick={() => void runCardAction("Failed finalization", () => onFinalize(commitment.id))}
-          type="button"
-        >
-          {activeAction === "Failed finalization" ? "Finalizing..." : "Finalize failed"}
-        </button>
+          <button
+            className="button button-secondary"
+            disabled={!canResolveAppeal || activeAction !== null}
+            onClick={() =>
+              void runCardAction("Appeal resolution", () => onResolveAppeal(commitment.id))
+            }
+            type="button"
+          >
+            {activeAction === "Appeal resolution" ? "Queueing..." : "Resolve appeal"}
+          </button>
+
+          <button
+            className="button button-secondary"
+            disabled={!canFinalize || activeAction !== null}
+            onClick={() =>
+              void runCardAction("Failed finalization", () => onFinalize(commitment.id))
+            }
+            type="button"
+          >
+            {activeAction === "Failed finalization" ? "Finalizing..." : "Finalize failed"}
+          </button>
+        </div>
       </div>
 
       {cardMessage !== null ? <p className="feedback">{cardMessage}</p> : null}

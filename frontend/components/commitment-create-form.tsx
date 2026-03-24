@@ -40,6 +40,11 @@ export function CommitmentCreateForm({
 }: CommitmentCreateFormProps) {
   const [values, setValues] = useState<CreateCommitmentFormValues>(initialValues);
   const [formError, setFormError] = useState<string | null>(null);
+  const effectiveFailReceiverLabel = values.useWebOwnerWallet
+    ? WEB_OWNER_WALLET
+    : values.failReceiver.trim().length > 0
+      ? values.failReceiver
+      : "Set a custom fail receiver";
 
   /**
    * This function updates one controlled field in the create form state.
@@ -113,92 +118,167 @@ export function CommitmentCreateForm({
   }
 
   return (
-    <section className="panel">
+    <section className="panel create-panel" id="create-panel">
       <div className="panel-header">
         <div>
           <p className="section-label">Create</p>
-          <h2 className="section-title">Create commitment on-chain and sync backend</h2>
+          <h2 className="section-title">Create a commitment</h2>
+          <p className="muted-copy">
+            Define the goal, lock the stake, and choose how the failure receiver should behave if
+            the commitment is not completed.
+          </p>
         </div>
       </div>
 
-      <form className="form-grid" onSubmit={(event) => void handleSubmit(event)}>
-        <label className="field">
-          <span>Title</span>
-          <input
-            onChange={(event) => updateValue("title", event.target.value)}
-            placeholder="Morning workout"
-            value={values.title}
-          />
-        </label>
+      <form className="create-layout" onSubmit={(event) => void handleSubmit(event)}>
+        <div className="create-form-stack">
+          <div className="form-stage">
+            <div className="form-stage-header">
+              <span className="stage-pill">01</span>
+              <div>
+                <h3 className="subsection-title">Commitment details</h3>
+                <p className="muted-copy">Describe the promise users will later verify with evidence.</p>
+              </div>
+            </div>
 
-        <label className="field field-wide">
-          <span>Description</span>
-          <textarea
-            onChange={(event) => updateValue("description", event.target.value)}
-            placeholder="Describe the commitment you will later prove with evidence."
-            rows={4}
-            value={values.description}
-          />
-        </label>
+            <div className="form-grid">
+              <label className="field">
+                <span>Title</span>
+                <input
+                  onChange={(event) => updateValue("title", event.target.value)}
+                  placeholder="Morning workout"
+                  value={values.title}
+                />
+              </label>
 
-        <label className="field">
-          <span>Amount (AVAX)</span>
-          <input
-            min="0.001"
-            onChange={(event) => updateValue("amountAvax", event.target.value)}
-            step="0.001"
-            type="number"
-            value={values.amountAvax}
-          />
-        </label>
+              <label className="field field-wide">
+                <span>Description</span>
+                <textarea
+                  onChange={(event) => updateValue("description", event.target.value)}
+                  placeholder="Describe the commitment you will later prove with evidence."
+                  rows={4}
+                  value={values.description}
+                />
+              </label>
+            </div>
+          </div>
 
-        <label className="field">
-          <span>Deadline</span>
-          <input
-            inputMode="numeric"
-            onChange={(event) => updateValue("deadlineDate", event.target.value)}
-            placeholder="dd/mm/yyyy"
-            value={values.deadlineDate}
-          />
-          <small className="field-hint">Use dd/mm/yyyy. Time is fixed to 00:00.</small>
-        </label>
+          <div className="form-stage">
+            <div className="form-stage-header">
+              <span className="stage-pill">02</span>
+              <div>
+                <h3 className="subsection-title">Stake and timing</h3>
+                <p className="muted-copy">Set the amount at risk and the date the system should judge against.</p>
+              </div>
+            </div>
 
-        <label className="field field-wide">
-          <span className="checkbox-label">
-            <input
-              checked={values.useWebOwnerWallet}
-              onChange={(event) => toggleUseWebOwnerWallet(event.target.checked)}
-              type="checkbox"
-            />
-            Use system fail receiver
-          </span>
-          <small className="field-hint">{WEB_OWNER_WALLET}</small>
-        </label>
+            <div className="form-grid">
+              <label className="field">
+                <span>Amount (AVAX)</span>
+                <input
+                  min="0.001"
+                  onChange={(event) => updateValue("amountAvax", event.target.value)}
+                  step="0.001"
+                  type="number"
+                  value={values.amountAvax}
+                />
+              </label>
 
-        <label className="field field-wide">
-          <span>Fail receiver</span>
-          <input
-            disabled={values.useWebOwnerWallet}
-            onChange={(event) => updateValue("failReceiver", event.target.value)}
-            placeholder="0x..."
-            value={values.failReceiver}
-          />
-          <small className="field-hint">
-            {values.useWebOwnerWallet
-              ? "Locked to the configured system fail receiver."
-              : "Use a valid wallet address different from your connected wallet."}
-          </small>
-        </label>
+              <label className="field">
+                <span>Deadline</span>
+                <input
+                  inputMode="numeric"
+                  onChange={(event) => updateValue("deadlineDate", event.target.value)}
+                  placeholder="dd/mm/yyyy"
+                  value={values.deadlineDate}
+                />
+                <small className="field-hint">Use dd/mm/yyyy. Time is fixed to 00:00.</small>
+              </label>
+            </div>
+          </div>
 
-        <div className="form-actions">
-          <button
-            className="button button-primary"
-            disabled={!canSubmit || isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? "Creating..." : "Create commitment"}
-          </button>
+          <div className="form-stage">
+            <div className="form-stage-header">
+              <span className="stage-pill">03</span>
+              <div>
+                <h3 className="subsection-title">Failure receiver</h3>
+                <p className="muted-copy">Choose whether the system wallet or a custom address receives failed settlements.</p>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label className="field field-wide">
+                <span className="checkbox-label">
+                  <input
+                    checked={values.useWebOwnerWallet}
+                    onChange={(event) => toggleUseWebOwnerWallet(event.target.checked)}
+                    type="checkbox"
+                  />
+                  Use system fail receiver
+                </span>
+                <small className="field-hint">{WEB_OWNER_WALLET}</small>
+              </label>
+
+              <label className="field field-wide">
+                <span>Fail receiver</span>
+                <input
+                  disabled={values.useWebOwnerWallet}
+                  onChange={(event) => updateValue("failReceiver", event.target.value)}
+                  placeholder="0x..."
+                  value={values.failReceiver}
+                />
+                <small className="field-hint">
+                  {values.useWebOwnerWallet
+                    ? "Locked to the configured system fail receiver."
+                    : "Use a valid wallet address different from your connected wallet."}
+                </small>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button
+              className="button button-primary"
+              disabled={!canSubmit || isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? "Creating..." : "Create commitment"}
+            </button>
+          </div>
         </div>
+
+        <aside className="create-summary-card">
+          <p className="section-label">Review</p>
+          <h3 className="subsection-title">Before you submit</h3>
+
+          <div className="summary-list">
+            <div className="summary-item">
+              <span>Title</span>
+              <strong>{values.title.trim().length > 0 ? values.title : "Add a clear title"}</strong>
+            </div>
+            <div className="summary-item">
+              <span>Stake</span>
+              <strong>{values.amountAvax} AVAX</strong>
+            </div>
+            <div className="summary-item">
+              <span>Deadline</span>
+              <strong>{values.deadlineDate.trim().length > 0 ? values.deadlineDate : "Select a date"}</strong>
+            </div>
+            <div className="summary-item">
+              <span>Fail receiver</span>
+              <strong>{effectiveFailReceiverLabel}</strong>
+            </div>
+            <div className="summary-item">
+              <span>Connected wallet</span>
+              <strong>{userWalletAddress ?? "Connect wallet first"}</strong>
+            </div>
+          </div>
+
+          <p className="muted-copy summary-note">
+            Submission creates the escrow on-chain first and then registers the backend record using
+            the exact same flow already wired into TimeLend.
+          </p>
+        </aside>
       </form>
 
       {formError !== null ? <p className="feedback feedback-error">{formError}</p> : null}

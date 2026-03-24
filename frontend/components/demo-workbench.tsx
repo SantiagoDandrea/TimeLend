@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatEther } from "viem";
 
 import { CommitmentCard } from "@/components/commitment-card";
 import { CommitmentCreateForm } from "@/components/commitment-create-form";
@@ -63,6 +64,17 @@ export function DemoWorkbench() {
   const [pageMessage, setPageMessage] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const activeCommitments = commitments.filter(
+    (commitment) => commitment.status !== "COMPLETED" && commitment.status !== "FAILED_FINAL",
+  );
+  const settledCommitments = commitments.filter(
+    (commitment) => commitment.status === "COMPLETED" || commitment.status === "FAILED_FINAL",
+  );
+  const totalStakedWei = commitments.reduce(
+    (accumulatedAmount, commitment) => accumulatedAmount + BigInt(commitment.amount),
+    0n,
+  );
+  const processingCount = commitments.filter((commitment) => commitment.isProcessing).length;
 
   /**
    * This function creates the commitment on-chain and then persists its metadata in the backend.
@@ -213,15 +225,91 @@ export function DemoWorkbench() {
 
   return (
     <main className="demo-shell">
-      <section className="hero-strip">
-        <div>
-          <p className="section-label">TimeLend Demo</p>
-          <h1>Functional frontend for end-to-end testing</h1>
-          <p className="hero-copy">
-            This screen lets you connect a wallet, create the escrow on-chain, sync the backend
-            record, upload evidence and drive the full verification flow.
-          </p>
+      <div className="demo-orb demo-orb-primary" aria-hidden="true" />
+      <div className="demo-orb demo-orb-secondary" aria-hidden="true" />
+
+      <header className="demo-topbar">
+        <div className="brand-lockup">
+          <div className="brand-mark">TL</div>
+          <div>
+            <p className="brand-name">TimeLend</p>
+            <p className="brand-tagline">AI-verified commitments for Avalanche Fuji.</p>
+          </div>
         </div>
+
+        <div className="topbar-pills" aria-label="Protocol status">
+          <span className="topbar-pill">Avalanche Fuji</span>
+          <span className="topbar-pill">AI verification</span>
+          <span className="topbar-pill">Demo ready</span>
+        </div>
+      </header>
+
+      <section className="hero-strip">
+        <div className="hero-main">
+          <p className="section-label">TimeLend Protocol</p>
+          <h1>Commit. Stake. Prove.</h1>
+          <p className="hero-copy">
+            TimeLend turns personal goals into verifiable on-chain commitments. Lock AVAX, submit
+            real evidence, let AI evaluate the outcome, and settle the result transparently.
+          </p>
+
+          <div className="hero-actions">
+            <a className="button button-primary" href="#wallet-panel">
+              Connect wallet
+            </a>
+            <a className="button button-secondary" href="#create-panel">
+              Create commitment
+            </a>
+          </div>
+
+          <div className="hero-feature-list" aria-label="Product highlights">
+            <div className="hero-feature">
+              <span className="hero-feature-dot" />
+              On-chain escrow with Avalanche Fuji settlement
+            </div>
+            <div className="hero-feature">
+              <span className="hero-feature-dot" />
+              Evidence upload, parsing, and AI verification
+            </div>
+            <div className="hero-feature">
+              <span className="hero-feature-dot" />
+              Appeal and finalization flow ready for live demo
+            </div>
+          </div>
+        </div>
+
+        <aside className="hero-aside">
+          <div className="hero-card-grid">
+            <div className="metric-card metric-card-primary">
+              <span>Portfolio overview</span>
+              <strong>{commitments.length}</strong>
+              <small>Total commitments tracked in this session</small>
+            </div>
+
+            <div className="metric-card">
+              <span>Active flow</span>
+              <strong>{activeCommitments.length}</strong>
+              <small>Live, pending, or appeal-stage commitments</small>
+            </div>
+
+            <div className="metric-card">
+              <span>Total staked</span>
+              <strong>{formatEther(totalStakedWei)} AVAX</strong>
+              <small>Escrow value represented across this dashboard</small>
+            </div>
+
+            <div className="metric-card">
+              <span>Processing</span>
+              <strong>{processingCount}</strong>
+              <small>Commitments currently moving through automation</small>
+            </div>
+          </div>
+
+          <div className="hero-note">
+            <p className="eyebrow">Live contract</p>
+            <p className="hero-note-value">{runtimeConfig.NEXT_PUBLIC_CONTRACT_ADDRESS}</p>
+          </div>
+        </aside>
       </section>
 
       <WalletSessionPanel
@@ -239,60 +327,198 @@ export function DemoWorkbench() {
         sessionError={sessionError}
       />
 
-      <CommitmentCreateForm
-        canSubmit={isAuthenticated && isOnSupportedChain && walletReady}
-        isSubmitting={isCreating}
-        onSubmit={handleCreateCommitment}
-        userWalletAddress={address}
-      />
+      <div className="workspace-grid">
+        <div className="workspace-column">
+          <CommitmentCreateForm
+            canSubmit={isAuthenticated && isOnSupportedChain && walletReady}
+            isSubmitting={isCreating}
+            onSubmit={handleCreateCommitment}
+            userWalletAddress={address}
+          />
 
-      {createError !== null ? <p className="feedback feedback-error">{createError}</p> : null}
-      {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
-      {dashboardError !== null ? <p className="feedback feedback-error">{dashboardError}</p> : null}
+          <section className="panel info-panel">
+            <div className="panel-header">
+              <div>
+                <p className="section-label">Flow</p>
+                <h2 className="section-title">How TimeLend settles outcomes</h2>
+              </div>
+            </div>
 
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="section-label">Dashboard</p>
-            <h2 className="section-title">Your commitments</h2>
-          </div>
-
-          <button
-            className="button button-secondary"
-            disabled={!isAuthenticated || isRefreshing}
-            onClick={() => void refreshCommitments()}
-            type="button"
-          >
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </button>
+            <div className="timeline-list">
+              <div className="timeline-item">
+                <span className="timeline-step">01</span>
+                <div>
+                  <strong>Stake and publish commitment</strong>
+                  <p>Lock AVAX on Avalanche Fuji and register the goal in the backend.</p>
+                </div>
+              </div>
+              <div className="timeline-item">
+                <span className="timeline-step">02</span>
+                <div>
+                  <strong>Upload evidence</strong>
+                  <p>Provide files, written proof, or both to support the verification pass.</p>
+                </div>
+              </div>
+              <div className="timeline-item">
+                <span className="timeline-step">03</span>
+                <div>
+                  <strong>AI evaluates and settlement follows</strong>
+                  <p>
+                    Success closes the loop cleanly. Failure can trigger appeal or immediate final
+                    payout depending on the decision.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
-        {!initialLoadComplete ? (
-          <p className="empty-state">Loading dashboard...</p>
-        ) : !isAuthenticated ? (
-          <p className="empty-state">Connect a wallet and authenticate to load your commitments.</p>
-        ) : commitments.length === 0 ? (
-          <p className="empty-state">No commitments found yet for this wallet.</p>
-        ) : (
-          <div className="commitment-list">
-            {commitments.map((commitment) => (
-              <CommitmentCard
-                commitment={commitment}
-                key={commitment.id}
-                onAppeal={handleAppeal}
-                onFinalize={handleFinalize}
-                onResolveAppeal={handleResolveAppeal}
-                onUploadEvidence={handleUploadEvidence}
-                onVerify={handleVerify}
-              />
-            ))}
+        <div className="workspace-column workspace-column-wide">
+          <div className="notice-stack" aria-live="polite">
+            {createError !== null ? <p className="feedback feedback-error">{createError}</p> : null}
+            {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
+            {dashboardError !== null ? (
+              <p className="feedback feedback-error">{dashboardError}</p>
+            ) : null}
           </div>
-        )}
-      </section>
 
-      <p className="secondary-meta">
-        Contract: <span>{runtimeConfig.NEXT_PUBLIC_CONTRACT_ADDRESS}</span>
-      </p>
+          <section className="panel dashboard-panel" id="dashboard-panel">
+            <div className="panel-header">
+              <div>
+                <p className="section-label">Dashboard</p>
+                <h2 className="section-title">Your commitments</h2>
+                <p className="muted-copy">
+                  Monitor active positions, review AI decisions, and settle the full demo flow from
+                  one place.
+                </p>
+              </div>
+
+              <button
+                className="button button-secondary"
+                disabled={!isAuthenticated || isRefreshing}
+                onClick={() => void refreshCommitments()}
+                type="button"
+              >
+                {isRefreshing ? "Refreshing..." : "Refresh"}
+              </button>
+            </div>
+
+            <div className="dashboard-summary">
+              <div className="summary-pill">
+                <span>Active</span>
+                <strong>{activeCommitments.length}</strong>
+              </div>
+              <div className="summary-pill">
+                <span>Settled</span>
+                <strong>{settledCommitments.length}</strong>
+              </div>
+              <div className="summary-pill">
+                <span>Connected wallet</span>
+                <strong>{address ?? "Not connected"}</strong>
+              </div>
+            </div>
+
+            {!initialLoadComplete ? (
+              <p className="empty-state">Loading dashboard...</p>
+            ) : !isAuthenticated ? (
+              <div className="empty-state-card">
+                <p className="empty-state-title">Wallet authentication required</p>
+                <p className="empty-state">
+                  Connect a wallet and sign the session message to load your commitments.
+                </p>
+              </div>
+            ) : commitments.length === 0 ? (
+              <div className="empty-state-card">
+                <p className="empty-state-title">No commitments yet</p>
+                <p className="empty-state">
+                  Create your first TimeLend commitment to see live statuses, evidence entries, and
+                  verification outcomes here.
+                </p>
+              </div>
+            ) : (
+              <div className="dashboard-sections">
+                <section className="commitment-section">
+                  <div className="section-row">
+                    <div>
+                      <p className="section-label">Open pipeline</p>
+                      <h3 className="subsection-title">Active, processing, and appeal-stage</h3>
+                    </div>
+                    <span className="count-pill">{activeCommitments.length}</span>
+                  </div>
+
+                  {activeCommitments.length === 0 ? (
+                    <p className="empty-state">No active commitments right now.</p>
+                  ) : (
+                    <div className="commitment-list">
+                      {activeCommitments.map((commitment) => (
+                        <CommitmentCard
+                          commitment={commitment}
+                          key={commitment.id}
+                          onAppeal={handleAppeal}
+                          onFinalize={handleFinalize}
+                          onResolveAppeal={handleResolveAppeal}
+                          onUploadEvidence={handleUploadEvidence}
+                          onVerify={handleVerify}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className="commitment-section">
+                  <div className="section-row">
+                    <div>
+                      <p className="section-label">History</p>
+                      <h3 className="subsection-title">Settled commitments</h3>
+                    </div>
+                    <span className="count-pill">{settledCommitments.length}</span>
+                  </div>
+
+                  {settledCommitments.length === 0 ? (
+                    <p className="empty-state">Completed and failed-final commitments will appear here.</p>
+                  ) : (
+                    <div className="commitment-list">
+                      {settledCommitments.map((commitment) => (
+                        <CommitmentCard
+                          commitment={commitment}
+                          key={commitment.id}
+                          onAppeal={handleAppeal}
+                          onFinalize={handleFinalize}
+                          onResolveAppeal={handleResolveAppeal}
+                          onUploadEvidence={handleUploadEvidence}
+                          onVerify={handleVerify}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      <footer className="demo-footer">
+        <div>
+          <p className="section-label">TimeLend</p>
+          <p className="footer-copy">
+            Production-shaped demo for wallet auth, escrow commitments, AI verification, appeal,
+            and settlement on Avalanche Fuji.
+          </p>
+        </div>
+
+        <div className="footer-links" aria-label="Community links">
+          <a href="https://x.com" rel="noreferrer" target="_blank">
+            X
+          </a>
+          <a href="https://github.com" rel="noreferrer" target="_blank">
+            GitHub
+          </a>
+          <a href="https://discord.com" rel="noreferrer" target="_blank">
+            Discord
+          </a>
+        </div>
+      </footer>
     </main>
   );
 }
