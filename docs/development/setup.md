@@ -24,9 +24,8 @@ pnpm install
 
 ## Desarrollo
 
-### Levantar PostgreSQL en docker para correr en local
+## Primer desplegue en local
 
-`docker start timelend-postgres`
 ### Preparar Prisma y el paquete de database:
 
 ```bash
@@ -44,6 +43,16 @@ Esto levanta:
 - frontend demo en `http://localhost:3000`
 - backend API en `http://localhost:4000`
 
+### Levantar PostgreSQL en docker para correr en local
+Al volver a iniciar el proyecto localmente, solo correr estos comandos:
+
+```bash
+docker start timelend-postgres
+```
+
+```bash
+pnpm dev
+```
 
 ## Comandos útiles
 
