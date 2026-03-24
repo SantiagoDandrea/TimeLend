@@ -130,128 +130,119 @@ export function CommitmentCreateForm({
         </div>
       </div>
 
-      <form className="create-layout" onSubmit={(event) => void handleSubmit(event)}>
-        <div className="create-form-stack">
-          <div className="form-stage">
-            <div className="form-stage-header">
-              <span className="stage-pill">01</span>
-              <div>
-                <h3 className="subsection-title">Commitment details</h3>
-                <p className="muted-copy">Describe the promise users will later verify with evidence.</p>
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <label className="field">
-                <span>Title</span>
-                <input
-                  onChange={(event) => updateValue("title", event.target.value)}
-                  placeholder="Morning workout"
-                  value={values.title}
-                />
-              </label>
-
-              <label className="field field-wide">
-                <span>Description</span>
-                <textarea
-                  onChange={(event) => updateValue("description", event.target.value)}
-                  placeholder="Describe the commitment you will later prove with evidence."
-                  rows={4}
-                  value={values.description}
-                />
-              </label>
+      <form className="create-form-stack" onSubmit={(event) => void handleSubmit(event)}>
+        <div className="form-stage">
+          <div className="form-stage-header">
+            <span className="stage-pill">01</span>
+            <div>
+              <h3 className="subsection-title">Commitment details</h3>
+              <p className="muted-copy">Describe the promise users will later verify with evidence.</p>
             </div>
           </div>
 
-          <div className="form-stage">
-            <div className="form-stage-header">
-              <span className="stage-pill">02</span>
-              <div>
-                <h3 className="subsection-title">Stake and timing</h3>
-                <p className="muted-copy">Set the amount at risk and the date the system should judge against.</p>
-              </div>
-            </div>
+          <div className="form-grid">
+            <label className="field">
+              <span>Title</span>
+              <input
+                onChange={(event) => updateValue("title", event.target.value)}
+                placeholder="Morning workout"
+                value={values.title}
+              />
+            </label>
 
-            <div className="form-grid">
-              <label className="field">
-                <span>Amount (AVAX)</span>
-                <input
-                  min="0.001"
-                  onChange={(event) => updateValue("amountAvax", event.target.value)}
-                  step="0.001"
-                  type="number"
-                  value={values.amountAvax}
-                />
-              </label>
-
-              <label className="field">
-                <span>Deadline</span>
-                <input
-                  inputMode="numeric"
-                  onChange={(event) => updateValue("deadlineDate", event.target.value)}
-                  placeholder="dd/mm/yyyy"
-                  value={values.deadlineDate}
-                />
-                <small className="field-hint">Use dd/mm/yyyy. Time is fixed to 00:00.</small>
-              </label>
-            </div>
-          </div>
-
-          <div className="form-stage">
-            <div className="form-stage-header">
-              <span className="stage-pill">03</span>
-              <div>
-                <h3 className="subsection-title">Failure receiver</h3>
-                <p className="muted-copy">Choose whether the system wallet or a custom address receives failed settlements.</p>
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <label className="field field-wide">
-                <span className="checkbox-label">
-                  <input
-                    checked={values.useWebOwnerWallet}
-                    onChange={(event) => toggleUseWebOwnerWallet(event.target.checked)}
-                    type="checkbox"
-                  />
-                  Use system fail receiver
-                </span>
-                <small className="field-hint">{WEB_OWNER_WALLET}</small>
-              </label>
-
-              <label className="field field-wide">
-                <span>Fail receiver</span>
-                <input
-                  disabled={values.useWebOwnerWallet}
-                  onChange={(event) => updateValue("failReceiver", event.target.value)}
-                  placeholder="0x..."
-                  value={values.failReceiver}
-                />
-                <small className="field-hint">
-                  {values.useWebOwnerWallet
-                    ? "Locked to the configured system fail receiver."
-                    : "Use a valid wallet address different from your connected wallet."}
-                </small>
-              </label>
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button
-              className="button button-primary"
-              disabled={!canSubmit || isSubmitting}
-              type="submit"
-            >
-              {isSubmitting ? "Creating..." : "Create commitment"}
-            </button>
+            <label className="field field-wide">
+              <span>Description</span>
+              <textarea
+                onChange={(event) => updateValue("description", event.target.value)}
+                placeholder="Describe the commitment you will later prove with evidence."
+                rows={4}
+                value={values.description}
+              />
+            </label>
           </div>
         </div>
 
-        <aside className="create-summary-card">
-          <p className="section-label">Review</p>
-          <h3 className="subsection-title">Before you submit</h3>
+        <div className="form-stage">
+          <div className="form-stage-header">
+            <span className="stage-pill">02</span>
+            <div>
+              <h3 className="subsection-title">Stake and timing</h3>
+              <p className="muted-copy">Set the amount at risk and the date the system should judge against.</p>
+            </div>
+          </div>
 
-          <div className="summary-list">
+          <div className="form-grid">
+            <label className="field">
+              <span>Amount (AVAX)</span>
+              <input
+                min="0.001"
+                onChange={(event) => updateValue("amountAvax", event.target.value)}
+                step="0.001"
+                type="number"
+                value={values.amountAvax}
+              />
+              <small className="field-hint field-hint-spacer">Stake is locked on-chain when you create the commitment.</small>
+            </label>
+
+            <label className="field">
+              <span>Deadline</span>
+              <input
+                inputMode="numeric"
+                onChange={(event) => updateValue("deadlineDate", event.target.value)}
+                placeholder="dd/mm/yyyy"
+                value={values.deadlineDate}
+              />
+              <small className="field-hint">Use dd/mm/yyyy. Time is fixed to 00:00.</small>
+            </label>
+          </div>
+        </div>
+
+        <div className="form-stage">
+          <div className="form-stage-header">
+            <span className="stage-pill">03</span>
+            <div>
+              <h3 className="subsection-title">Failure receiver</h3>
+              <p className="muted-copy">Choose whether the system wallet or a custom address receives failed settlements.</p>
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <label className="field field-wide">
+              <span className="checkbox-label">
+                <input
+                  checked={values.useWebOwnerWallet}
+                  onChange={(event) => toggleUseWebOwnerWallet(event.target.checked)}
+                  type="checkbox"
+                />
+                Use system fail receiver
+              </span>
+              <small className="field-hint">{WEB_OWNER_WALLET}</small>
+            </label>
+
+            <label className="field field-wide">
+              <span>Fail receiver</span>
+              <input
+                disabled={values.useWebOwnerWallet}
+                onChange={(event) => updateValue("failReceiver", event.target.value)}
+                placeholder="0x..."
+                value={values.failReceiver}
+              />
+              <small className="field-hint">
+                {values.useWebOwnerWallet
+                  ? "Locked to the configured system fail receiver."
+                  : "Use a valid wallet address different from your connected wallet."}
+              </small>
+            </label>
+          </div>
+        </div>
+
+        <div className="review-inline">
+          <div className="review-inline-header">
+            <p className="section-label">Review</p>
+            <h3 className="subsection-title">Before you create</h3>
+          </div>
+
+          <div className="summary-list summary-list-inline">
             <div className="summary-item">
               <span>Title</span>
               <strong>{values.title.trim().length > 0 ? values.title : "Add a clear title"}</strong>
@@ -278,7 +269,17 @@ export function CommitmentCreateForm({
             Submission creates the escrow on-chain first and then registers the backend record using
             the exact same flow already wired into TimeLend.
           </p>
-        </aside>
+        </div>
+
+        <div className="form-actions">
+          <button
+            className="button button-primary"
+            disabled={!canSubmit || isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? "Creating..." : "Create commitment"}
+          </button>
+        </div>
       </form>
 
       {formError !== null ? <p className="feedback feedback-error">{formError}</p> : null}

@@ -203,8 +203,7 @@ export function CommitmentCard({
         type="button"
       >
         <div className="commitment-toggle-main">
-          <p className="section-label">Commitment {commitment.onchainId}</p>
-          <h3 className="commitment-title">{commitment.title}</h3>
+          <h3 className="commitment-toggle-title">{commitment.title}</h3>
         </div>
 
         <div className="commitment-toggle-meta">

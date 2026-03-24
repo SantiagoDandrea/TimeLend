@@ -160,18 +160,6 @@ export function CreatePageContent() {
         </section>
       ) : null}
 
-      <CommitmentCreateForm
-        canSubmit={isAuthenticated && isOnSupportedChain && walletReady}
-        isSubmitting={isCreating}
-        onSubmit={handleCreateCommitment}
-        userWalletAddress={address}
-      />
-
-      <div className="notice-stack" aria-live="polite">
-        {createError !== null ? <p className="feedback feedback-error">{createError}</p> : null}
-        {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
-      </div>
-
       <section className="panel info-panel">
         <div className="panel-header">
           <div>
@@ -204,6 +192,18 @@ export function CreatePageContent() {
           </div>
         </div>
       </section>
+
+      <CommitmentCreateForm
+        canSubmit={isAuthenticated && isOnSupportedChain && walletReady}
+        isSubmitting={isCreating}
+        onSubmit={handleCreateCommitment}
+        userWalletAddress={address}
+      />
+
+      <div className="notice-stack" aria-live="polite">
+        {createError !== null ? <p className="feedback feedback-error">{createError}</p> : null}
+        {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
+      </div>
     </main>
   );
 }
