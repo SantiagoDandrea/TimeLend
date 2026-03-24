@@ -1,14 +1,20 @@
 /**
  * This file defines the root layout for the TimeLend frontend.
- * It exists to wrap every page with global metadata and styles.
+ * It exists to wrap every page with global metadata, styles, and fonts.
  * It fits the system by establishing the shell that future screens will inherit.
  */
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Inter } from "next/font/google";
 
 import { AppProviders } from "@/components/app-providers";
 
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 /**
  * This metadata object describes the application for browsers and platforms.
@@ -17,8 +23,29 @@ import "./globals.css";
  * It is important because it sets the default identity of the frontend shell.
  */
 export const metadata: Metadata = {
-  title: "TimeLend",
-  description: "Demo frontend scaffold for the TimeLend platform."
+  title: "TimeLend - Commit. Stake. Prove.",
+  description:
+    "Put your money where your goals are. Stake AVAX on your commitments and let AI verify your success.",
+  keywords: ["Web3", "AVAX", "Avalanche", "commitment", "staking", "goals", "AI verification"],
+  authors: [{ name: "TimeLend" }],
+  openGraph: {
+    title: "TimeLend - Commit. Stake. Prove.",
+    description:
+      "Put your money where your goals are. Stake AVAX on your commitments and let AI verify your success.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TimeLend - Commit. Stake. Prove.",
+    description:
+      "Put your money where your goals are. Stake AVAX on your commitments and let AI verify your success.",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
+  width: "device-width",
+  initialScale: 1,
 };
 
 type RootLayoutProps = {
@@ -33,8 +60,8 @@ type RootLayoutProps = {
  */
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="es">
-      <body>
+    <html lang="en" className="dark">
+      <body className={`${inter.variable} font-sans antialiased`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
