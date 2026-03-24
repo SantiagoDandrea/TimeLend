@@ -7,6 +7,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { AppProviders } from "@/components/app-providers";
+import { SiteNavigation } from "@/components/site-navigation";
+import { siteConfig } from "@/lib/site-config";
 
 import "./globals.css";
 
@@ -35,7 +37,34 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="es">
       <body className="app-body">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <div className="app-frame">
+            <SiteNavigation />
+            <div className="site-main">{children}</div>
+
+            <footer className="demo-footer">
+              <div>
+                <p className="section-label">{siteConfig.name}</p>
+                <p className="footer-copy">
+                  Premium demo surface for TimeLend wallet auth, on-chain commitments, AI
+                  verification, appeals, and settlement on Avalanche Fuji.
+                </p>
+              </div>
+
+              <div className="footer-links" aria-label="Community links">
+                <a href="https://x.com" rel="noreferrer" target="_blank">
+                  X
+                </a>
+                <a href="https://github.com" rel="noreferrer" target="_blank">
+                  GitHub
+                </a>
+                <a href="https://discord.com" rel="noreferrer" target="_blank">
+                  Discord
+                </a>
+              </div>
+            </footer>
+          </div>
+        </AppProviders>
       </body>
     </html>
   );

@@ -1,16 +1,16 @@
 /**
- * This file renders the main functional demo page for the TimeLend frontend.
- * It exists to expose the complete browser-driven testing flow in a single route.
- * It fits the system by turning the previous scaffold landing page into a usable end-to-end demo tool.
+ * This file renders the landing page for the TimeLend frontend.
+ * It exists to provide a focused entry route before users move into create or dashboard flows.
+ * It fits the system by separating the home experience from the operational routes.
  */
-import { DemoWorkbench } from "@/components/demo-workbench";
+import { HomePageContent } from "@/components/home-page-content";
 
 /**
  * This component renders the root frontend route.
- * It receives no props because the page composition is fully static.
- * It returns the demo workbench screen.
- * It is important because local development and demos start from this one route.
+ * It receives no props because the page content is fully composed inside the client entry component.
+ * It returns the landing page experience.
+ * It is important because the root path now acts as the clean home route for the app.
  */
 export default function HomePage() {
-  return <DemoWorkbench />;
+  return <HomePageContent />;
 }
