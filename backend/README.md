@@ -4,7 +4,7 @@
 
 # Backend
 
-API Express modular adaptada a Vercel Functions con rutas bajo `/api/*`.
+API Express modular adaptada al runtime Express de Vercel con rutas publicas bajo `/api/*`.
 
 ## Flujo on-chain soportado
 

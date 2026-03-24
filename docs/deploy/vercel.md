@@ -25,7 +25,8 @@ TimeLend se despliega como dos proyectos separados dentro del mismo repositorio:
 Notas:
 
 - `backend/vercel.json` ya deja configurado:
-  catch-all serverless bajo `/api/*`
+  runtime Express de Vercel usando `backend/src/app.ts`
+  rutas publicas bajo `/api/*`
   `maxDuration` de 300s
   cron diario para finalizar fallos expirados
 - si usas un plan Pro y queres una finalizacion mas frecuente, cambia el schedule en `backend/vercel.json`.
