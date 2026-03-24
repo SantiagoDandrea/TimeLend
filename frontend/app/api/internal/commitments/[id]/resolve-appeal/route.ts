@@ -12,6 +12,18 @@ const paramsSchema = z.object({
   id: z.string().uuid()
 });
 
+function parseJsonBody(responseText: string) {
+  if (responseText.length === 0) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(responseText) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * This function forwards one resolve-appeal request to the backend using the internal API key.
  * It receives the Next.js route params containing the off-chain commitment id.
@@ -24,22 +36,41 @@ export async function POST(
 ) {
   const params = paramsSchema.parse(await context.params);
   const serverConfig = getFrontendServerConfig();
-  const response = await fetch(
-    `${serverConfig.API_URL}/commitments/${params.id}/resolve-appeal`,
-    {
-      body: JSON.stringify({}),
-      headers: {
-        "Content-Type": "application/json",
-        "x-internal-api-key": serverConfig.INTERNAL_API_KEY
+  try {
+    const response = await fetch(
+      `${serverConfig.API_URL}/commitments/${params.id}/resolve-appeal`,
+      {
+        body: JSON.stringify({}),
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-api-key": serverConfig.INTERNAL_API_KEY
+        },
+        method: "POST"
+      }
+    );
+
+    const responseText = await response.text();
+    const parsedPayload = parseJsonBody(responseText);
+    const payload =
+      parsedPayload ??
+      (responseText.length > 0
+        ? { message: responseText }
+        : { message: `Backend request failed with status ${response.status}.` });
+
+    return NextResponse.json(payload, {
+      status: response.status
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to reach the backend appeal resolution endpoint."
       },
-      method: "POST"
-    }
-  );
-
-  const responseText = await response.text();
-  const payload = responseText.length > 0 ? JSON.parse(responseText) : {};
-
-  return NextResponse.json(payload, {
-    status: response.status
-  });
+      {
+        status: 502
+      }
+    );
+  }
 }
