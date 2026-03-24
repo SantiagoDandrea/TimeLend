@@ -43,12 +43,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <div className="site-main">{children}</div>
 
             <footer className="demo-footer">
-              <div>
+              <div className="footer-signoff">
                 <p className="section-label">{siteConfig.name}</p>
                 <p className="footer-copy">
                   Premium demo surface for TimeLend wallet auth, on-chain commitments, AI
                   verification, appeals, and settlement on Avalanche Fuji.
                 </p>
+                <p className="footer-credit">Built by D&apos;Andrea Santiago</p>
               </div>
 
               <div className="footer-links" aria-label="Community links">
@@ -58,8 +59,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <a href="https://github.com" rel="noreferrer" target="_blank">
                   GitHub
                 </a>
-                <a href="https://discord.com" rel="noreferrer" target="_blank">
-                  Discord
+                <a href="https://linkedin.com" rel="noreferrer" target="_blank">
+                  LinkedIn
                 </a>
               </div>
             </footer>

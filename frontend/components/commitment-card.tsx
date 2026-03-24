@@ -66,6 +66,27 @@ function getAppealEvidenceCutoff(commitment: ApiCommitment) {
   return new Date(appealRecordedEvent.createdAt).getTime();
 }
 
+function getCommitmentSummaryStatus(commitment: ApiCommitment) {
+  if (commitment.status === "COMPLETED") {
+    return {
+      badgeClass: "completed",
+      label: "Completed",
+    };
+  }
+
+  if (commitment.status === "FAILED_FINAL") {
+    return {
+      badgeClass: "failed",
+      label: "Failed",
+    };
+  }
+
+  return {
+    badgeClass: "pending",
+    label: "Pending",
+  };
+}
+
 /**
  * This component renders the full demo controls and latest state for one commitment.
  * It receives the hydrated commitment aggregate and the action handlers owned by the parent screen.
@@ -80,6 +101,7 @@ export function CommitmentCard({
   onUploadEvidence,
   onVerify
 }: CommitmentCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textEvidence, setTextEvidence] = useState("");
   const [cardMessage, setCardMessage] = useState<string | null>(null);
@@ -148,6 +170,8 @@ export function CommitmentCard({
       : commitment.status === "FAILED_PENDING_APPEAL" && !commitment.appealed
         ? "Appeal this commitment first to unlock appeal evidence submission."
         : null;
+  const summaryStatus = getCommitmentSummaryStatus(commitment);
+  const expandableSectionId = `commitment-details-${commitment.id}`;
 
   /**
    * This function runs one card action and maps any thrown error into local UI feedback.
@@ -170,214 +194,258 @@ export function CommitmentCard({
   }
 
   return (
-    <article className="commitment-card">
-      <div className="commitment-card-header">
-        <div>
+    <article className={`commitment-card${isExpanded ? " is-expanded" : ""}`}>
+      <button
+        aria-controls={expandableSectionId}
+        aria-expanded={isExpanded}
+        className="commitment-toggle"
+        onClick={() => setIsExpanded((currentState) => !currentState)}
+        type="button"
+      >
+        <div className="commitment-toggle-main">
           <p className="section-label">Commitment {commitment.onchainId}</p>
           <h3 className="commitment-title">{commitment.title}</h3>
-          <p className="detail-copy">{commitment.description}</p>
-        </div>
-        <span className={`status-badge status-${commitment.status.toLowerCase()}`}>
-          {commitment.isProcessing ? "PROCESSING" : commitment.status}
-        </span>
-      </div>
-
-      <div className="card-topline">
-        <span className="mini-pill">Escrow live</span>
-        <span className="mini-pill">Evidence aware</span>
-        <span className="mini-pill">{commitment.appealed ? "Appealed" : "Standard flow"}</span>
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-box">
-          <span>Amount</span>
-          <strong>{formatEther(BigInt(commitment.amount))} AVAX</strong>
-          <small>On-chain id: {commitment.onchainId}</small>
         </div>
 
-        <div className="stat-box">
-          <span>Deadline</span>
-          <strong>{formatDateOnly(commitment.deadline)}</strong>
-          <small>Appeal window ends: {formatDateOnly(commitment.appealWindowEndsAt)}</small>
+        <div className="commitment-toggle-meta">
+          <div className="commitment-summary-chip">
+            <span>Stake</span>
+            <strong>{formatEther(BigInt(commitment.amount))} AVAX</strong>
+          </div>
+          <span className={`status-badge status-${summaryStatus.badgeClass}`}>
+            {summaryStatus.label}
+          </span>
+          <span className={`chevron-icon${isExpanded ? " is-open" : ""}`} aria-hidden="true">
+            ⌄
+          </span>
         </div>
+      </button>
 
-        <div className="stat-box">
-          <span>Evidence</span>
-          <strong>{commitment.evidences.length} entries</strong>
-          <small>Latest: {describeEvidenceEntry(latestEvidence)}</small>
-        </div>
+      <div className={`commitment-expandable${isExpanded ? " is-expanded" : ""}`} id={expandableSectionId}>
+        <div className="commitment-expandable-inner">
+          <div className="card-topline">
+            <span className="mini-pill">Escrow live</span>
+            <span className="mini-pill">{commitment.isProcessing ? "Processing" : commitment.status}</span>
+            <span className="mini-pill">{commitment.appealed ? "Appealed" : "Standard flow"}</span>
+          </div>
 
-        <div className="stat-box">
-          <span>Fail receiver</span>
-          <strong>{commitment.failReceiver}</strong>
-          <small>Payout only happens after final on-chain settlement.</small>
-        </div>
-      </div>
+          <div className="detail-box">
+            <strong>Description</strong>
+            <p>{commitment.description}</p>
+          </div>
 
-      {latestVerification !== null ? (
-        <div className="detail-box">
-          <strong>Latest verification</strong>
-          <p>
-            Result: {latestVerification.result ? "success" : "fail"} | Confidence:{" "}
-            {latestVerification.confidence}
-          </p>
-          <p>{latestVerification.reasoning}</p>
-        </div>
-      ) : (
-        <div className="detail-box">
-          <strong>Latest verification</strong>
-          <p>No verification has been stored for this commitment yet.</p>
-        </div>
-      )}
+          <div className="stats-grid">
+            <div className="stat-box">
+              <span>Deadline</span>
+              <strong>{formatDateOnly(commitment.deadline)}</strong>
+              <small>Appeal window ends: {formatDateOnly(commitment.appealWindowEndsAt)}</small>
+            </div>
 
-      {appealHint !== null ? (
-        <div className="detail-box">
-          <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Appeal policy"}</strong>
-          <p>{appealHint}</p>
-        </div>
-      ) : null}
+            <div className="stat-box">
+              <span>Evidence</span>
+              <strong>{commitment.evidences.length} entries</strong>
+              <small>Latest: {describeEvidenceEntry(latestEvidence)}</small>
+            </div>
 
-      {canSubmitEvidence ? (
-        <div className="detail-box">
-          <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Evidence submission"}</strong>
-          <p>
-            {isAppealEvidenceStage
-              ? "Upload appeal evidence or provide more explicit proof. The backend will resolve the appeal right after submission."
-              : "Submit a file, written evidence, or both before verification."}
-          </p>
+            <div className="stat-box">
+              <span>Fail receiver</span>
+              <strong>{commitment.failReceiver}</strong>
+              <small>Payout only happens after final on-chain settlement.</small>
+            </div>
 
-          <div className="evidence-form">
-            <label className="field evidence-field">
-              <span>{isAppealEvidenceStage ? "Appeal file" : "Upload file"}</span>
-              <input
-                accept=".pdf,.txt,text/plain,application/pdf"
-                disabled={activeAction !== null}
-                key={fileInputKey}
-                onChange={(event) => {
-                  const nextFile = event.target.files?.[0] ?? null;
-                  setSelectedFile(nextFile);
-                }}
-                type="file"
-              />
-            </label>
+            <div className="stat-box">
+              <span>Current status</span>
+              <strong>{commitment.isProcessing ? "PROCESSING" : commitment.status}</strong>
+              <small>Updated: {formatDateOnly(commitment.updatedAt)}</small>
+            </div>
+          </div>
 
-            <label className="field field-wide">
-              <span>{isAppealEvidenceStage ? "Write your appeal evidence" : "Write your evidence"}</span>
-              <textarea
-                disabled={activeAction !== null}
-                onChange={(event) => setTextEvidence(event.target.value)}
-                placeholder={
-                  isAppealEvidenceStage
-                    ? "Explain why the previous failure should be reconsidered."
-                    : "Describe the proof you want the verifier to consider."
-                }
-                rows={4}
-                value={textEvidence}
-              />
-            </label>
+          {latestVerification !== null ? (
+            <div className="detail-box">
+              <strong>Latest verification</strong>
+              <p>
+                Result: {latestVerification.result ? "success" : "fail"} | Confidence:{" "}
+                {latestVerification.confidence}
+              </p>
+              <p>{latestVerification.reasoning}</p>
+            </div>
+          ) : (
+            <div className="detail-box">
+              <strong>Latest verification</strong>
+              <p>No verification has been stored for this commitment yet.</p>
+            </div>
+          )}
 
-            <div className="form-actions">
+          <div className="detail-box">
+            <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Submitted evidence"}</strong>
+            {latestEvidence === null ? (
+              <p>No submitted evidence has been stored for this commitment yet.</p>
+            ) : (
+              <>
+                <p>Latest entry: {describeEvidenceEntry(latestEvidence)}</p>
+                {latestEvidence.originalFileName !== null ? (
+                  <p>File: {latestEvidence.originalFileName}</p>
+                ) : null}
+                {latestEvidence.submittedText !== null &&
+                latestEvidence.submittedText.trim().length > 0 ? (
+                  <p>{latestEvidence.submittedText}</p>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          {appealHint !== null ? (
+            <div className="detail-box">
+              <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Appeal policy"}</strong>
+              <p>{appealHint}</p>
+            </div>
+          ) : null}
+
+          {canSubmitEvidence ? (
+            <div className="detail-box">
+              <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Evidence submission"}</strong>
+              <p>
+                {isAppealEvidenceStage
+                  ? "Upload appeal evidence or provide more explicit proof. The backend will resolve the appeal right after submission."
+                  : "Submit a file, written evidence, or both before verification."}
+              </p>
+
+              <div className="evidence-form">
+                <label className="field evidence-field">
+                  <span>{isAppealEvidenceStage ? "Appeal file" : "Upload file"}</span>
+                  <input
+                    accept=".pdf,.txt,text/plain,application/pdf"
+                    disabled={activeAction !== null}
+                    key={fileInputKey}
+                    onChange={(event) => {
+                      const nextFile = event.target.files?.[0] ?? null;
+                      setSelectedFile(nextFile);
+                    }}
+                    type="file"
+                  />
+                </label>
+
+                <label className="field field-wide">
+                  <span>
+                    {isAppealEvidenceStage ? "Write your appeal evidence" : "Write your evidence"}
+                  </span>
+                  <textarea
+                    disabled={activeAction !== null}
+                    onChange={(event) => setTextEvidence(event.target.value)}
+                    placeholder={
+                      isAppealEvidenceStage
+                        ? "Explain why the previous failure should be reconsidered."
+                        : "Describe the proof you want the verifier to consider."
+                    }
+                    rows={4}
+                    value={textEvidence}
+                  />
+                </label>
+
+                <div className="form-actions">
+                  <button
+                    className="button button-secondary"
+                    disabled={
+                      activeAction !== null ||
+                      (selectedFile === null && textEvidence.trim().length === 0)
+                    }
+                    onClick={() =>
+                      void runCardAction(
+                        isAppealEvidenceStage ? "Appeal evidence upload" : "Evidence upload",
+                        async () => {
+                          const trimmedTextEvidence = textEvidence.trim();
+
+                          if (selectedFile === null && trimmedTextEvidence.length === 0) {
+                            throw new Error("Provide a file, written evidence, or both.");
+                          }
+
+                          await onUploadEvidence(commitment.id, {
+                            file: selectedFile,
+                            textEvidence: trimmedTextEvidence,
+                          });
+
+                          if (isAppealEvidenceStage) {
+                            await onResolveAppeal(commitment.id);
+                          }
+
+                          setSelectedFile(null);
+                          setTextEvidence("");
+                          setFileInputKey((currentKey) => currentKey + 1);
+                        },
+                      )
+                    }
+                    type="button"
+                  >
+                    {activeAction === "Evidence upload" || activeAction === "Appeal evidence upload"
+                      ? "Uploading..."
+                      : isAppealEvidenceStage
+                        ? "Submit appeal evidence"
+                        : "Submit evidence"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : evidenceLockMessage !== null ? (
+            <div className="detail-box">
+              <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Evidence"}</strong>
+              <p>{evidenceLockMessage}</p>
+            </div>
+          ) : null}
+
+          <div className="action-panel">
+            <div className="section-row">
+              <div>
+                <p className="section-label">Actions</p>
+                <h4 className="subsection-title">Drive the workflow</h4>
+              </div>
+            </div>
+
+            <div className="button-row">
+              <button
+                className="button button-primary"
+                disabled={!canVerify || activeAction !== null}
+                onClick={() => void runCardAction("Verification", () => onVerify(commitment.id))}
+                type="button"
+              >
+                {activeAction === "Verification" ? "Queueing..." : "Verify"}
+              </button>
+
+              <button
+                className="button button-warning"
+                disabled={!canAppeal || activeAction !== null}
+                onClick={() => void runCardAction("Appeal", () => onAppeal(commitment))}
+                type="button"
+              >
+                {activeAction === "Appeal" ? "Appealing..." : "Appeal"}
+              </button>
+
               <button
                 className="button button-secondary"
-                disabled={
-                  activeAction !== null ||
-                  (selectedFile === null && textEvidence.trim().length === 0)
-                }
+                disabled={!canResolveAppeal || activeAction !== null}
                 onClick={() =>
-                  void runCardAction(
-                    isAppealEvidenceStage ? "Appeal evidence upload" : "Evidence upload",
-                    async () => {
-                      const trimmedTextEvidence = textEvidence.trim();
-
-                      if (selectedFile === null && trimmedTextEvidence.length === 0) {
-                        throw new Error("Provide a file, written evidence, or both.");
-                      }
-
-                      await onUploadEvidence(commitment.id, {
-                        file: selectedFile,
-                        textEvidence: trimmedTextEvidence
-                      });
-
-                      if (isAppealEvidenceStage) {
-                        await onResolveAppeal(commitment.id);
-                      }
-
-                      setSelectedFile(null);
-                      setTextEvidence("");
-                      setFileInputKey((currentKey) => currentKey + 1);
-                    }
-                  )
+                  void runCardAction("Appeal resolution", () => onResolveAppeal(commitment.id))
                 }
                 type="button"
               >
-                {activeAction === "Evidence upload" || activeAction === "Appeal evidence upload"
-                  ? "Uploading..."
-                  : isAppealEvidenceStage
-                    ? "Submit appeal evidence"
-                    : "Submit evidence"}
+                {activeAction === "Appeal resolution" ? "Queueing..." : "Resolve appeal"}
+              </button>
+
+              <button
+                className="button button-secondary"
+                disabled={!canFinalize || activeAction !== null}
+                onClick={() =>
+                  void runCardAction("Failed finalization", () => onFinalize(commitment.id))
+                }
+                type="button"
+              >
+                {activeAction === "Failed finalization" ? "Finalizing..." : "Finalize failed"}
               </button>
             </div>
           </div>
-        </div>
-      ) : evidenceLockMessage !== null ? (
-        <div className="detail-box">
-          <strong>{isAppealEvidenceStage ? "Appeal evidence" : "Evidence"}</strong>
-          <p>{evidenceLockMessage}</p>
-        </div>
-      ) : null}
 
-      <div className="action-panel">
-        <div className="section-row">
-          <div>
-            <p className="section-label">Actions</p>
-            <h4 className="subsection-title">Drive the workflow</h4>
-          </div>
-        </div>
-
-        <div className="button-row">
-          <button
-            className="button button-primary"
-            disabled={!canVerify || activeAction !== null}
-            onClick={() => void runCardAction("Verification", () => onVerify(commitment.id))}
-            type="button"
-          >
-            {activeAction === "Verification" ? "Queueing..." : "Verify"}
-          </button>
-
-          <button
-            className="button button-warning"
-            disabled={!canAppeal || activeAction !== null}
-            onClick={() => void runCardAction("Appeal", () => onAppeal(commitment))}
-            type="button"
-          >
-            {activeAction === "Appeal" ? "Appealing..." : "Appeal"}
-          </button>
-
-          <button
-            className="button button-secondary"
-            disabled={!canResolveAppeal || activeAction !== null}
-            onClick={() =>
-              void runCardAction("Appeal resolution", () => onResolveAppeal(commitment.id))
-            }
-            type="button"
-          >
-            {activeAction === "Appeal resolution" ? "Queueing..." : "Resolve appeal"}
-          </button>
-
-          <button
-            className="button button-secondary"
-            disabled={!canFinalize || activeAction !== null}
-            onClick={() =>
-              void runCardAction("Failed finalization", () => onFinalize(commitment.id))
-            }
-            type="button"
-          >
-            {activeAction === "Failed finalization" ? "Finalizing..." : "Finalize failed"}
-          </button>
+          {cardMessage !== null ? <p className="feedback">{cardMessage}</p> : null}
         </div>
       </div>
-
-      {cardMessage !== null ? <p className="feedback">{cardMessage}</p> : null}
     </article>
   );
 }

@@ -34,64 +34,45 @@ export function HomePageContent() {
       <div className="demo-orb demo-orb-primary" aria-hidden="true" />
       <div className="demo-orb demo-orb-secondary" aria-hidden="true" />
 
-      <section className="hero-strip page-hero">
-        <div className="hero-main">
-          <p className="section-label">TimeLend Protocol</p>
-          <h1>Commit. Stake. Prove.</h1>
-          <p className="hero-copy">
-            Turn personal goals into on-chain commitments. Stake AVAX, prove what you did, and let
-            AI verification settle the outcome with transparent backend and contract coordination.
-          </p>
+      <section className="panel page-header page-header-home">
+        <p className="section-label">TimeLend Protocol</p>
+        <h1 className="page-title">Commit. Stake. Prove.</h1>
+        <p className="page-subtitle">
+          Turn personal goals into on-chain commitments. Stake AVAX, prove what you did, and let
+          AI verification settle the outcome with transparent backend and contract coordination.
+        </p>
 
-          <div className="hero-actions">
-            <Link className="button button-primary" href="/create">
-              Create Commitment
-            </Link>
-            <Link className="button button-secondary" href="/dashboard">
-              Dashboard
-            </Link>
+        <div className="header-card-row">
+          <div className="metric-card metric-card-primary">
+            <span>Wallet address</span>
+            <strong>{address ?? "Not connected"}</strong>
+            <small>Full wallet visibility stays on Home.</small>
           </div>
-
-          <div className="hero-feature-list" aria-label="Product highlights">
-            <div className="hero-feature">
-              <span className="hero-feature-dot" />
-              Escrow-first commitment creation on Avalanche Fuji
-            </div>
-            <div className="hero-feature">
-              <span className="hero-feature-dot" />
-              Evidence upload, parsing, and AI-backed verification
-            </div>
-            <div className="hero-feature">
-              <span className="hero-feature-dot" />
-              Appeal and final settlement flows for live demos
-            </div>
+          <div className="metric-card">
+            <span>Connection status</span>
+            <strong>{isConnected ? "Connected" : "Ready to connect"}</strong>
+            <small>{isAuthenticated ? "Backend session active" : "Authenticate after connecting"}</small>
+          </div>
+          <div className="metric-card">
+            <span>Network</span>
+            <strong>{isOnSupportedChain ? "Avalanche Fuji" : "Fuji required"}</strong>
+            <small>Contract creation and appeals run on Avalanche Fuji.</small>
+          </div>
+          <div className="metric-card">
+            <span>Contract</span>
+            <strong>Live demo</strong>
+            <small>{runtimeConfig.NEXT_PUBLIC_CONTRACT_ADDRESS}</small>
           </div>
         </div>
 
-        <aside className="hero-aside">
-          <div className="hero-card-grid">
-            <div className="metric-card metric-card-primary">
-              <span>Wallet status</span>
-              <strong>{isConnected ? "Connected" : "Ready to connect"}</strong>
-              <small>{isAuthenticated ? "Backend session active" : "Authenticate after connecting"}</small>
-            </div>
-            <div className="metric-card">
-              <span>Target network</span>
-              <strong>{isOnSupportedChain ? "Avalanche Fuji" : "Fuji required"}</strong>
-              <small>Contract creation and appeals run on Avalanche Fuji.</small>
-            </div>
-            <div className="metric-card">
-              <span>Contract</span>
-              <strong>Live demo</strong>
-              <small>{runtimeConfig.NEXT_PUBLIC_CONTRACT_ADDRESS}</small>
-            </div>
-            <div className="metric-card">
-              <span>Flow</span>
-              <strong>3 focused routes</strong>
-              <small>Home for entry, Create for escrow, Dashboard for evidence and settlement.</small>
-            </div>
-          </div>
-        </aside>
+        <div className="header-actions">
+          <Link className="button button-primary" href="/create">
+            Create Commitment
+          </Link>
+          <Link className="button button-secondary" href="/dashboard">
+            Dashboard
+          </Link>
+        </div>
       </section>
 
       <div className="page-grid">

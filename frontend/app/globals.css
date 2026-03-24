@@ -194,11 +194,13 @@ textarea:focus-visible {
 .brand-tagline,
 .secondary-meta,
 .footer-copy,
+.footer-credit,
 .empty-state-title,
 .feedback,
 .subsection-title,
 .commitment-title,
 .section-title,
+.page-title,
 .hero-strip h1 {
   margin: 0;
 }
@@ -210,7 +212,9 @@ textarea:focus-visible {
 
 .brand-tagline,
 .footer-copy,
+.footer-credit,
 .hero-copy,
+.page-subtitle,
 .muted-copy,
 .detail-copy,
 .empty-state,
@@ -227,6 +231,7 @@ textarea:focus-visible {
 .topbar-pills,
 .site-nav,
 .hero-actions,
+.header-actions,
 .button-row,
 .form-actions,
 .footer-links,
@@ -310,6 +315,35 @@ textarea:focus-visible {
     linear-gradient(135deg, rgba(124, 137, 255, 0.12), transparent 42%),
     radial-gradient(circle at 90% 10%, rgba(110, 231, 249, 0.18), transparent 22%);
   pointer-events: none;
+}
+
+.page-header {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: clamp(2.5rem, 5vw, 4.3rem);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  max-width: 12ch;
+}
+
+.page-subtitle {
+  margin: 0;
+  max-width: 72ch;
+  line-height: 1.75;
+}
+
+.header-card-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.header-actions {
+  align-items: center;
 }
 
 .page-hero-compact h1 {
@@ -713,6 +747,12 @@ textarea:focus-visible {
   letter-spacing: 0.01em;
 }
 
+.button-compact {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+}
+
 .button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
@@ -822,6 +862,10 @@ textarea:focus-visible {
   display: grid;
 }
 
+.guard-panel {
+  margin-bottom: 24px;
+}
+
 .dashboard-summary {
   margin-bottom: 20px;
 }
@@ -857,12 +901,91 @@ textarea:focus-visible {
 
 .commitment-card {
   display: grid;
-  gap: 18px;
-  padding: 22px;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .commitment-card-header {
   gap: 18px;
+}
+
+.commitment-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 20px 22px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.commitment-toggle:hover {
+  background: rgba(148, 163, 184, 0.04);
+}
+
+.commitment-toggle-main,
+.commitment-toggle-meta,
+.commitment-summary-chip {
+  display: grid;
+  gap: 8px;
+}
+
+.commitment-toggle-meta,
+.commitment-summary-chip {
+  justify-items: end;
+}
+
+.commitment-summary-chip span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.commitment-summary-chip strong {
+  font-size: 1.02rem;
+  overflow-wrap: anywhere;
+}
+
+.chevron-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--text-soft);
+  font-size: 1rem;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.chevron-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.commitment-expandable {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s ease;
+}
+
+.commitment-expandable.is-expanded {
+  grid-template-rows: 1fr;
+}
+
+.commitment-expandable-inner {
+  display: grid;
+  gap: 18px;
+  overflow: hidden;
+  padding: 0 22px 22px;
 }
 
 .commitment-title {
@@ -900,6 +1023,12 @@ textarea:focus-visible {
   color: #c8f9ff;
 }
 
+.status-pending {
+  border-color: rgba(110, 231, 249, 0.22);
+  background: rgba(110, 231, 249, 0.12);
+  color: #c8f9ff;
+}
+
 .status-failed_pending_appeal {
   border-color: rgba(245, 182, 101, 0.24);
   background: rgba(245, 182, 101, 0.14);
@@ -913,6 +1042,12 @@ textarea:focus-visible {
 }
 
 .status-failed_final {
+  border-color: rgba(255, 127, 144, 0.24);
+  background: rgba(255, 127, 144, 0.14);
+  color: #ffd5db;
+}
+
+.status-failed {
   border-color: rgba(255, 127, 144, 0.24);
   background: rgba(255, 127, 144, 0.14);
   color: #ffd5db;
@@ -959,6 +1094,11 @@ textarea:focus-visible {
 .footer-copy {
   max-width: 74ch;
   line-height: 1.7;
+}
+
+.footer-credit {
+  margin-top: 10px;
+  font-size: 0.88rem;
 }
 
 .footer-links a {
@@ -1051,6 +1191,7 @@ textarea:focus-visible {
     justify-content: flex-start;
   }
 
+  .header-card-row,
   .hero-card-grid,
   .panel-grid,
   .stats-grid,
@@ -1066,7 +1207,6 @@ textarea:focus-visible {
   }
 
   .panel,
-  .commitment-card,
   .demo-footer {
     padding: 18px;
   }
@@ -1078,16 +1218,33 @@ textarea:focus-visible {
   }
 
   .button,
+  .button-compact,
   .nav-link,
   .footer-links a {
     width: 100%;
   }
 
   .button-row,
+  .header-actions,
   .hero-actions,
   .footer-links,
   .site-nav {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .demo-topbar,
+  .demo-footer,
+  .panel-header,
+  .section-row,
+  .commitment-card-header,
+  .commitment-toggle {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .commitment-toggle-meta,
+  .commitment-summary-chip {
+    justify-items: start;
   }
 }

@@ -5,7 +5,6 @@ import { useState } from "react";
 import { formatEther } from "viem";
 
 import { CommitmentCard } from "@/components/commitment-card";
-import { WalletSessionPanel } from "@/components/wallet-session-panel";
 import { useCommitmentsDashboard } from "@/hooks/use-commitments-dashboard";
 import { useTimeLendWalletActions } from "@/hooks/use-timelend-wallet-actions";
 import { useWalletSession } from "@/hooks/use-wallet-session";
@@ -18,6 +17,14 @@ import {
 } from "@/services/timelend-api";
 import type { ApiCommitment, EvidenceSubmissionInput } from "@/types/frontend";
 
+function formatShortAddress(address: string | undefined) {
+  if (address === undefined) {
+    return "Not connected";
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 /**
  * This component renders the dedicated dashboard route using the existing commitment operations.
  * It receives no props because all dashboard and wallet state comes from the same hooks already used by the app.
@@ -27,18 +34,9 @@ import type { ApiCommitment, EvidenceSubmissionInput } from "@/types/frontend";
 export function DashboardPageContent() {
   const {
     address,
-    authenticateWallet,
-    connectWallet,
-    connectorName,
-    disconnectWallet,
     isAuthenticated,
-    isAuthenticating,
-    isConnected,
-    isConnecting,
     isOnSupportedChain,
     session,
-    sessionError,
-    switchToSupportedChain,
   } = useWalletSession();
   const { appealCommitmentWithWallet } = useTimeLendWalletActions();
   const { commitments, dashboardError, initialLoadComplete, isRefreshing, refreshCommitments } =
@@ -138,69 +136,52 @@ export function DashboardPageContent() {
     <main className="demo-shell page-shell">
       <div className="demo-orb demo-orb-secondary" aria-hidden="true" />
 
-      <section className="hero-strip page-hero page-hero-compact">
-        <div className="hero-main">
-          <p className="section-label">Dashboard</p>
-          <h1>Operate the full commitment pipeline.</h1>
-          <p className="hero-copy">
-            This page keeps the existing dashboard logic intact and gives the review workflow its
-            own focused space for evidence, verification, appeal, and settlement.
-          </p>
+      <section className="panel page-header">
+        <p className="section-label">Dashboard</p>
+        <h1 className="page-title">Operate the full commitment pipeline.</h1>
+        <p className="page-subtitle">
+          This page keeps the existing dashboard logic intact and gives the review workflow its own
+          focused space for evidence, verification, appeal, and settlement.
+        </p>
+
+        <div className="header-card-row">
+          <div className="metric-card metric-card-primary">
+            <span>Wallet address</span>
+            <strong>{formatShortAddress(address)}</strong>
+            <small>Authenticate from Home before operating dashboard actions.</small>
+          </div>
+          <div className="metric-card">
+            <span>Active commitments</span>
+            <strong>{activeCommitments.length}</strong>
+            <small>Live, processing, and appeal-stage items.</small>
+          </div>
+          <div className="metric-card">
+            <span>Settled commitments</span>
+            <strong>{settledCommitments.length}</strong>
+            <small>Completed or failed-final records already resolved.</small>
+          </div>
+          <div className="metric-card">
+            <span>Total staked</span>
+            <strong>{formatEther(totalStakedWei)} AVAX</strong>
+            <small>{processingCount} commitments currently moving through automation.</small>
+          </div>
         </div>
 
-        <aside className="hero-aside">
-          <div className="hero-card-grid">
-            <div className="metric-card metric-card-primary">
-              <span>Active commitments</span>
-              <strong>{activeCommitments.length}</strong>
-              <small>Live, processing, and appeal-stage items.</small>
-            </div>
-            <div className="metric-card">
-              <span>Settled commitments</span>
-              <strong>{settledCommitments.length}</strong>
-              <small>Completed or failed-final records already resolved.</small>
-            </div>
-            <div className="metric-card">
-              <span>Total staked</span>
-              <strong>{formatEther(totalStakedWei)} AVAX</strong>
-              <small>Escrow value represented in the authenticated dashboard.</small>
-            </div>
-            <div className="metric-card">
-              <span>Processing</span>
-              <strong>{processingCount}</strong>
-              <small>Commitments currently moving through automation.</small>
-            </div>
-          </div>
-
-          <div className="hero-actions hero-actions-stack">
-            <Link className="button button-secondary" href="/">
-              Back home
-            </Link>
-            <Link className="button button-primary" href="/create">
-              New commitment
-            </Link>
-          </div>
-        </aside>
+        <div className="header-actions">
+          <Link className="button button-secondary button-compact" href="/">
+            Back home
+          </Link>
+          <Link className="button button-primary button-compact" href="/create">
+            New commitment
+          </Link>
+        </div>
       </section>
-
-      <WalletSessionPanel
-        address={address}
-        connectorName={connectorName}
-        isAuthenticated={isAuthenticated}
-        isAuthenticating={isAuthenticating}
-        isConnected={isConnected}
-        isConnecting={isConnecting}
-        isOnSupportedChain={isOnSupportedChain}
-        onAuthenticate={authenticateWallet}
-        onConnect={connectWallet}
-        onDisconnect={disconnectWallet}
-        onSwitchChain={switchToSupportedChain}
-        sessionError={sessionError}
-      />
 
       <div className="notice-stack" aria-live="polite">
         {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
-        {dashboardError !== null ? <p className="feedback feedback-error">{dashboardError}</p> : null}
+        {dashboardError !== null ? (
+          <p className="feedback feedback-error">{dashboardError}</p>
+        ) : null}
       </div>
 
       <section className="panel dashboard-panel">
@@ -224,29 +205,14 @@ export function DashboardPageContent() {
           </button>
         </div>
 
-        <div className="dashboard-summary">
-          <div className="summary-pill">
-            <span>Connected wallet</span>
-            <strong>{address ?? "Not connected"}</strong>
-          </div>
-          <div className="summary-pill">
-            <span>Authentication</span>
-            <strong>{isAuthenticated ? "Session active" : "Pending"}</strong>
-          </div>
-          <div className="summary-pill">
-            <span>Network</span>
-            <strong>{isOnSupportedChain ? "Avalanche Fuji" : "Unsupported chain"}</strong>
-          </div>
-        </div>
-
         {!initialLoadComplete ? (
           <p className="empty-state">Loading dashboard...</p>
         ) : !isAuthenticated ? (
           <div className="empty-state-card">
-            <p className="empty-state-title">Authenticate to load commitments</p>
+            <p className="empty-state-title">Authenticate on Home to load commitments</p>
             <p className="empty-state">
               The dashboard logic is unchanged. Connect your wallet and sign the session challenge
-              above to unlock commitment data and actions.
+              on Home, then return here to unlock commitment data and actions.
             </p>
           </div>
         ) : commitments.length === 0 ? (

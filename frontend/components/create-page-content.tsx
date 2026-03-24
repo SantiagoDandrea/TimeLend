@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { CommitmentCreateForm } from "@/components/commitment-create-form";
-import { WalletSessionPanel } from "@/components/wallet-session-panel";
 import {
   buildDeadlineFromDateOnly,
   getFailReceiverValidationError,
@@ -15,6 +14,14 @@ import { useWalletSession } from "@/hooks/use-wallet-session";
 import { createCommitmentRecord } from "@/services/timelend-api";
 import type { CreateCommitmentFormValues } from "@/types/frontend";
 
+function formatShortAddress(address: string | undefined) {
+  if (address === undefined) {
+    return "Not connected";
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 /**
  * This component renders the focused create route while preserving the original create flow logic.
  * It receives no props because wallet state and submission state are managed locally through existing hooks.
@@ -24,18 +31,9 @@ import type { CreateCommitmentFormValues } from "@/types/frontend";
 export function CreatePageContent() {
   const {
     address,
-    authenticateWallet,
-    connectWallet,
-    connectorName,
-    disconnectWallet,
     isAuthenticated,
-    isAuthenticating,
-    isConnected,
-    isConnecting,
     isOnSupportedChain,
     session,
-    sessionError,
-    switchToSupportedChain,
   } = useWalletSession();
   const { createCommitmentWithWallet, walletReady } = useTimeLendWalletActions();
   const [pageMessage, setPageMessage] = useState<string | null>(null);
@@ -114,116 +112,98 @@ export function CreatePageContent() {
     <main className="demo-shell page-shell">
       <div className="demo-orb demo-orb-primary" aria-hidden="true" />
 
-      <section className="hero-strip page-hero page-hero-compact">
-        <div className="hero-main">
-          <p className="section-label">Create commitment</p>
-          <h1>Publish the escrow and goal.</h1>
-          <p className="hero-copy">
-            Use the exact existing create flow to lock AVAX on-chain and register the matching
-            backend record. This route simply gives that action its own clear workspace.
-          </p>
+      <section className="panel page-header">
+        <p className="section-label">Create commitment</p>
+        <h1 className="page-title">Publish the escrow and goal.</h1>
+        <p className="page-subtitle">
+          Use the exact existing create flow to lock AVAX on-chain and register the matching
+          backend record. The route is now cleaner and focused, but the submission behavior stays
+          the same.
+        </p>
+
+        <div className="header-card-row">
+          <div className="metric-card metric-card-primary">
+            <span>Wallet address</span>
+            <strong>{formatShortAddress(address)}</strong>
+            <small>Connect and authenticate from Home before submitting.</small>
+          </div>
+          <div className="metric-card">
+            <span>Route focus</span>
+            <strong>Create only</strong>
+            <small>The full create form has maximum space and a cleaner reading flow.</small>
+          </div>
+          <div className="metric-card">
+            <span>Next step</span>
+            <strong>Dashboard</strong>
+            <small>After publishing, move to Dashboard for evidence and verification.</small>
+          </div>
         </div>
 
-        <aside className="hero-aside">
-          <div className="hero-card-grid">
-            <div className="metric-card metric-card-primary">
-              <span>Route focus</span>
-              <strong>Create only</strong>
-              <small>Wallet connection and submission stay visible without dashboard clutter.</small>
-            </div>
-            <div className="metric-card">
-              <span>Next step</span>
-              <strong>Dashboard</strong>
-              <small>Track evidence, verification, appeals, and settlement after creation.</small>
-            </div>
-          </div>
-
-          <div className="hero-actions hero-actions-stack">
-            <Link className="button button-secondary" href="/">
-              Back home
-            </Link>
-            <Link className="button button-primary" href="/dashboard">
-              Open dashboard
-            </Link>
-          </div>
-        </aside>
+        <div className="header-actions">
+          <Link className="button button-secondary button-compact" href="/">
+            Back home
+          </Link>
+          <Link className="button button-primary button-compact" href="/dashboard">
+            Open dashboard
+          </Link>
+        </div>
       </section>
 
-      <WalletSessionPanel
-        address={address}
-        connectorName={connectorName}
-        isAuthenticated={isAuthenticated}
-        isAuthenticating={isAuthenticating}
-        isConnected={isConnected}
-        isConnecting={isConnecting}
-        isOnSupportedChain={isOnSupportedChain}
-        onAuthenticate={authenticateWallet}
-        onConnect={connectWallet}
-        onDisconnect={disconnectWallet}
-        onSwitchChain={switchToSupportedChain}
-        sessionError={sessionError}
+      {!isAuthenticated || !isOnSupportedChain ? (
+        <section className="panel guard-panel">
+          <p className="section-label">Wallet gate</p>
+          <h2 className="section-title">Connect and authenticate on Home first</h2>
+          <p className="muted-copy">
+            This page keeps the same create logic, but the wallet controls now live on Home. Use
+            your wallet there, then return here to submit.
+          </p>
+        </section>
+      ) : null}
+
+      <CommitmentCreateForm
+        canSubmit={isAuthenticated && isOnSupportedChain && walletReady}
+        isSubmitting={isCreating}
+        onSubmit={handleCreateCommitment}
+        userWalletAddress={address}
       />
 
-      <div className="focus-layout">
-        <div className="focus-main">
-          <CommitmentCreateForm
-            canSubmit={isAuthenticated && isOnSupportedChain && walletReady}
-            isSubmitting={isCreating}
-            onSubmit={handleCreateCommitment}
-            userWalletAddress={address}
-          />
+      <div className="notice-stack" aria-live="polite">
+        {createError !== null ? <p className="feedback feedback-error">{createError}</p> : null}
+        {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
+      </div>
 
-          <div className="notice-stack" aria-live="polite">
-            {createError !== null ? <p className="feedback feedback-error">{createError}</p> : null}
-            {pageMessage !== null ? <p className="feedback feedback-success">{pageMessage}</p> : null}
+      <section className="panel info-panel">
+        <div className="panel-header">
+          <div>
+            <p className="section-label">Before you submit</p>
+            <h2 className="section-title">Keep the same flow, just cleaner</h2>
           </div>
         </div>
 
-        <aside className="focus-side">
-          <section className="panel info-panel">
-            <div className="panel-header">
-              <div>
-                <p className="section-label">Before you submit</p>
-                <h2 className="section-title">Keep the same flow, just cleaner</h2>
-              </div>
+        <div className="timeline-list">
+          <div className="timeline-item">
+            <span className="timeline-step">01</span>
+            <div>
+              <strong>Wallet authenticated on Home</strong>
+              <p>Connect and sign from the Home page before attempting submission here.</p>
             </div>
-
-            <div className="timeline-list">
-              <div className="timeline-item">
-                <span className="timeline-step">01</span>
-                <div>
-                  <strong>Wallet connected</strong>
-                  <p>Use the panel above to connect and authenticate before attempting submission.</p>
-                </div>
-              </div>
-              <div className="timeline-item">
-                <span className="timeline-step">02</span>
-                <div>
-                  <strong>Fuji selected</strong>
-                  <p>The contract call still requires Avalanche Fuji exactly as before.</p>
-                </div>
-              </div>
-              <div className="timeline-item">
-                <span className="timeline-step">03</span>
-                <div>
-                  <strong>Dashboard after create</strong>
-                  <p>Once published, move to Dashboard to upload evidence and drive verification.</p>
-                </div>
-              </div>
+          </div>
+          <div className="timeline-item">
+            <span className="timeline-step">02</span>
+            <div>
+              <strong>Fuji selected</strong>
+              <p>The contract call still requires Avalanche Fuji exactly as before.</p>
             </div>
-
-            {!isAuthenticated ? (
-              <div className="empty-state-card compact-card">
-                <p className="empty-state-title">Wallet authentication required</p>
-                <p className="empty-state">
-                  The create form keeps the same submission behavior. Authenticate above to unlock
-                  the final button state.
-                </p>
-              </div>
-            ) : null}
-          </section>
-        </aside>
-      </div>
+          </div>
+          <div className="timeline-item">
+            <span className="timeline-step">03</span>
+            <div>
+              <strong>Dashboard after create</strong>
+              <p>Once published, move to Dashboard to upload evidence and drive verification.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
